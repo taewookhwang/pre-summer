@@ -1,0 +1,50 @@
+{
+  "name": "homecleaningbackend",
+  "version": "1.0.0",
+  "description": "Backend for Home Cleaning App with microservices architecture",
+  "main": "Gateway/src/index.js",
+  "scripts": {
+    "start": "node Gateway/src/index.js",
+    "dev": "nodemon Gateway/src/index.js",
+    "auth": "nodemon Services/AuthService/src/index.js",
+    "consumer": "nodemon Services/ConsumerService/src/index.js",
+    "technician": "nodemon Services/TechnicianService/src/index.js",
+    "chat": "nodemon Services/ChatService/src/index.js",
+    "notification": "nodemon Services/NotificationService/src/index.js",
+    "file": "nodemon Services/FileService/src/index.js",
+    "review": "nodemon Services/ReviewService/src/index.js",
+    "matching": "nodemon Services/MatchingService/src/index.js",
+    "admin": "nodemon Services/AdminService/src/index.js",
+    "cancel": "nodemon Services/CancelService/src/index.js",
+    "db:migrate": "sequelize db:migrate",
+    "db:seed": "sequelize db:seed:all",
+    "test": "jest"
+  },
+  "keywords": ["cleaning", "service", "microservices", "nodejs", "express"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.1536.0",
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
+    "express-validator": "^7.0.1",
+    "firebase-admin": "^12.0.0",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.11.3",
+    "pg-hstore": "^2.3.4",
+    "redis": "^4.6.13",
+    "sequelize": "^6.37.1",
+    "socket.io": "^4.7.4",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.3",
+    "supertest": "^6.3.4"
+  }
+}

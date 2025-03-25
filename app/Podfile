@@ -1,0 +1,26 @@
+workspace 'HomeCleaningApp' 
+platform :ios, '18.2'  # iOS 18.2 유지
+
+target 'HomeCleaningApp' do   
+  use_frameworks!  # 동적 프레임워크 사용  
+  
+  pod 'Alamofire', '~> 5.6'  # HTTP 통신
+  pod 'Socket.IO-Client-Swift', '~> 16.0' # WebSocket   
+  pod 'Firebase/Messaging', '~> 10.0' # 푸시 알림   
+  # pod 'RZDebugMenu', '~> 0.3.0'    # In-app settings (비활성화)  
+  pod 'Firebase/Auth', '~> 10.29.0'   # 사용자 인증/등록
+  # 다날 결제 SDK는 공식 제공 시 추가 (가정:'DanalSDK') 
+end
+
+# 빌드 이슈 방지를 위한 설정
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      # 모든 Pod의 iOS 버전을 프로젝트와 동일하게 설정
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '18.2'
+      
+      # 스크립트 샌드박싱 비활성화 (빌드 문제 해결)
+      config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+    end
+  end
+end
