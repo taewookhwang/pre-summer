@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+//const bodyParser = require('body-parser'); // 별도의 body-parser 사용
 require('dotenv').config({ path: '../../../Infrastructure/.env' });
 
 // 데이터베이스 연결
@@ -18,8 +19,16 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// 요청 본문 로그 미들웨어 추가
+app.use((req, res, next) => {
+  if (req.method === 'POST') {
+    console.log('Request body received:', req.body);
+  }
+  next();
+});
+
 // 라우트
-app.use('/api/auth', authRoutes);
+app.use('/', authRoutes);
 
 // 기본 라우트
 app.get('/', (req, res) => {
