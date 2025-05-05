@@ -26,41 +26,24 @@ class AuthCoordinator: CoordinatorProtocol {
         navigationController.pushViewController(signupVC, animated: true)
     }
     
-    
-    // AuthCoordinator.swift
+    // 수정된 showHome 메서드
     func showHome(for user: UserDTO) {
-        // 임시 구현 - 실제 화면이 구현되면 교체
-        let successVC = UIViewController()
-        successVC.view.backgroundColor = .white
-        successVC.title = "Login Success"
+        // 등록 성공 알림 표시
+        let alert = UIAlertController(
+            title: "등록 성공",
+            message: "계정이 성공적으로 생성되었습니다. 로그인 화면으로 이동합니다.",
+            preferredStyle: .alert
+        )
         
-        navigationController.setViewControllers([successVC], animated: true)
+        alert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
+            // 로그인 화면으로 이동
+            self?.showLogin()
+        })
+        
+        // 현재 보이는 화면에 알림 표시
+        navigationController.visibleViewController?.present(alert, animated: true)
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    // func showHome(for user: UserDTO) {
-    //    switch user.role {
-    //    case "consumer":
-    //        showConsumerHome()
-    //    case "technician":
-    //        showTechnicianHome()
-    //   case "admin":
-    //        showAdminHome()
-    //   default:
-    //       showConsumerHome() // 기본값
-    //   }
-    // }
+
     
     func showConsumerHome() {
         // 임시 구현 - 실제 화면이 구현되면 교체
@@ -86,3 +69,23 @@ class AuthCoordinator: CoordinatorProtocol {
         navigationController.setViewControllers([tempVC], animated: true)
     }
 }
+
+
+
+// 아래 주석 처리된 코드는 로그인 후 사용자 역할별 홈 화면으로 이동하기 위한 코드입니다.
+// 등록 후에는 위의 showHome 메서드를 사용하고, 로그인 성공 후에는 이 메서드를 호출하도록 수정해야 합니다.
+
+/*
+func showHome(for user: UserDTO) {
+    switch user.role {
+    case "consumer":
+        showConsumerHome()
+    case "technician":
+        showTechnicianHome()
+    case "admin":
+        showAdminHome()
+    default:
+        showConsumerHome() // 기본값
+    }
+}
+*/
