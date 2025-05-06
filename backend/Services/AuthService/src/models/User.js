@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../../../../Shared/database');
+const { sequelize } = require('../../../../Shared/database');
 
 const User = sequelize.define('User', {
   id: {
