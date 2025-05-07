@@ -18,27 +18,16 @@ app.use(morgan('dev')); // 모든 요청에 대한 기본 로그                
 // 프록시 미들웨어 등록 전 로그
 console.log('프록시 미들웨어 등록 전');
 
-// 프록시 라우트를 먼저 정의 - body 파싱 전에 프록시가 요청을 처리
-app.use('/api/auth', (req, res, next) => {
-  console.log('==== AUTH REQUEST RECEIVED ====');
-  console.log('Timestamp:', new Date().toISOString());
-  console.log('Method:', req.method);
-  console.log('Full URL:', req.originalUrl); // 전체 경로
-  console.log('Path:', req.url); // 미들웨어 경로
-  console.log('Headers:', JSON.stringify(req.headers, null, 2));
-  // body 파싱 전이므로 req.body 로깅은 제거
-  console.log('============================');
-  next();
-}, createProxyMiddleware({                                                            //프록시 라이팅(어디로)
-  target: `http://127.0.0.1:${process.env.AUTH_SERVICE_PORT || 3001}`, // 문자열로 감싸기
+// 공통 프록시 설정 옵션 정의
+const createProxyOptions = (targetPort, pathRewrite, serviceName) => ({
+  target: `http://127.0.0.1:${targetPort}`,
   changeOrigin: true,
-  pathRewrite: { '^/api/auth': '' }, // Auth Service와 경로 일치
+  pathRewrite: pathRewrite,
   logLevel: 'debug',
   timeout: 60000, // 60초로 늘림
   proxyTimeout: 120000, // 120초로 늘림
-  // buffer 옵션 제거됨
   onProxyReq: (proxyReq, req, res) => {
-    console.log(`프록시 요청 시작: ${proxyReq.method} ${proxyReq.path}`); // 문자열로 감싸기
+    console.log(`프록시 요청 시작: ${proxyReq.method} ${proxyReq.path}`);
     console.log('프록시 대상:', proxyReq._headers.host);
   },
   onProxyRes: (proxyRes, req, res) => {
@@ -46,21 +35,81 @@ app.use('/api/auth', (req, res, next) => {
     console.log('응답 헤더:', JSON.stringify(proxyRes.headers, null, 2));
   },
   onError: (err, req, res) => {
-    console.error('프록시 오류 발생:', err.message);
+    console.error(`프록시 오류 발생 (${serviceName}):`, err.message);
     console.error('상세 오류:', err.stack);
     console.error('요청 URL:', req.originalUrl);
     console.error('요청 Method:', req.method);
     console.error('요청 Headers:', req.headers);
     if (!res.headersSent) {
       res.status(502).json({
-        error: 'Auth Service 연결 실패',
+        error: `${serviceName} 연결 실패`,
         message: err.message,
         code: 'PROXY_ERROR',
         timestamp: new Date().toISOString()
       });
     }
   }
-}));
+});
+
+// 요청 로깅 미들웨어 생성 함수
+const createRequestLogger = (serviceName) => (req, res, next) => {
+  console.log(`==== ${serviceName} REQUEST RECEIVED ====`);
+  console.log('Timestamp:', new Date().toISOString());
+  console.log('Method:', req.method);
+  console.log('Full URL:', req.originalUrl);
+  console.log('Path:', req.url);
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('============================');
+  next();
+};
+
+// Auth Service 프록시
+app.use('/api/auth', 
+  createRequestLogger('AUTH'),
+  createProxyMiddleware(
+    createProxyOptions(
+      process.env.AUTH_SERVICE_PORT || 3001,
+      { '^/api/auth': '' },
+      'Auth Service'
+    )
+  )
+);
+
+// Consumer Service 프록시
+app.use('/api/consumer',
+  createRequestLogger('CONSUMER'),
+  createProxyMiddleware(
+    createProxyOptions(
+      process.env.CONSUMER_SERVICE_PORT || 3002,
+      { '^/api/consumer': '' },
+      'Consumer Service'
+    )
+  )
+);
+
+// Technician Service 프록시
+app.use('/api/technician',
+  createRequestLogger('TECHNICIAN'),
+  createProxyMiddleware(
+    createProxyOptions(
+      process.env.TECHNICIAN_SERVICE_PORT || 3003,
+      { '^/api/technician': '' },
+      'Technician Service'
+    )
+  )
+);
+
+// Admin Service 프록시
+app.use('/api/admin',
+  createRequestLogger('ADMIN'),
+  createProxyMiddleware(
+    createProxyOptions(
+      process.env.ADMIN_SERVICE_PORT || 3004,
+      { '^/api/admin': '' },
+      'Admin Service'
+    )
+  )
+);
 
 // 프록시 미들웨어 등록 후 로그
 console.log('프록시 미들웨어 등록 후');
@@ -68,6 +117,10 @@ console.log('프록시 미들웨어 등록 후');
 // 다른 라우트를 위한 본문 파싱은 여기에 배치
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // URL-encoded 데이터 처리 추가
+
+// 메인 라우터 연결
+const mainRouter = require('./routes');
+app.use('/', mainRouter);
 
 // Global error handler (프록시 외 오류 추적)
 app.use((err, req, res, next) => {
@@ -83,6 +136,10 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {                                                             //서버 실행, 외부 요청 받을 준비
   console.log(`API Gateway running on port ${PORT}`);
   console.log(`API Gateway URL: http://localhost:${PORT}`);
-  console.log('For iOS simulator, use http://172.30.1.88:3000 (replace with your Mac\'s IP)');
-  console.log(`Auth Service should be running at: http://localhost:${process.env.AUTH_SERVICE_PORT || 3001}`);
+  console.log('For iOS simulator, use http://localhost:3000');
+  console.log('Available services:');
+  console.log(`- Auth Service: http://localhost:${process.env.AUTH_SERVICE_PORT || 3001}`);
+  console.log(`- Consumer Service: http://localhost:${process.env.CONSUMER_SERVICE_PORT || 3002}`);
+  console.log(`- Technician Service: http://localhost:${process.env.TECHNICIAN_SERVICE_PORT || 3003}`);
+  console.log(`- Admin Service: http://localhost:${process.env.ADMIN_SERVICE_PORT || 3004}`);
 });

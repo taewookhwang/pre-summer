@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-// 0� �\ - D� �� Ux�
+// 메인 라우트 - 게이트웨이 상태 및 서비스 정보 제공
 router.get('/', (req, res) => {
   res.status(200).json({
     success: true,
@@ -16,7 +16,7 @@ router.get('/', (req, res) => {
   });
 });
 
-// D� �� Ux ���x�
+// 헬스 체크 엔드포인트
 router.get('/health', (req, res) => {
   res.status(200).json({
     success: true,
