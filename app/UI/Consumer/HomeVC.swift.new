@@ -1,0 +1,73 @@
+import UIKit
+
+// 이 파일은 수정된 구현 예시입니다.
+// 실제 HomeVC.swift 구현 수정 시 참고하세요.
+
+class HomeVC: UIViewController {
+    var viewModel: HomeViewModel!
+    weak var coordinator: ConsumerCoordinator?
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .white
+        title = "홈"
+    }
+}
+
+class CategoryCell: UICollectionViewCell {
+    func configure(with category: ServiceCategory) {
+        // 카테고리 구성
+        // name: 카테고리 이름
+        // imageURL: 이미지 URL (String)
+    }
+}
+
+class ServiceCell: UICollectionViewCell {
+    func configure(with service: Service) {
+        // 서비스 정보 구성
+        // 변경된 모델에 맞게 수정
+        titleLabel.text = service.name
+        // price가 String 타입으로 변경됨
+        priceLabel.text = "\(service.priceValue.formattedPrice())원"
+        
+        if let rating = service.rating {
+            ratingLabel.text = String(format: "%.1f", rating)
+            ratingView.isHidden = false
+        } else {
+            ratingView.isHidden = true
+        }
+        
+        // 이미지 로딩 코드는 동일하게 유지
+    }
+}
+
+class ReservationCell: UITableViewCell {
+    func configure(with reservation: Reservation) {
+        // 예약 정보 구성
+        // 변경된 모델에 맞게 수정
+        serviceLabel.text = reservation.service?.name ?? "알 수 없는 서비스"
+        
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy년 MM월 dd일 HH:mm"
+        dateLabel.text = dateFormatter.string(from: reservation.reservationDate)
+        
+        addressLabel.text = reservation.address
+        
+        statusLabel.text = reservation.status.displayName
+        statusView.backgroundColor = reservation.status.color
+    }
+}
+
+class ErrorView: UIView {
+    var retryAction: (() -> Void)?
+    
+    func configure(message: String) {
+        // 에러 메시지 표시 구성
+    }
+}
+
+class EmptyStateView: UIView {
+    func configure(image: UIImage?, title: String, message: String) {
+        // 빈 상태 화면 구성
+    }
+}

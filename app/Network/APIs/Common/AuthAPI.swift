@@ -1,34 +1,30 @@
-import Alamofire
+import Foundation
 
 struct AuthAPI {
     static let shared = AuthAPI()
     private let gateway = APIGateway.shared
     
-    // 회원가입
+    // Register new user
     func register(userData: [String: Any], completion: @escaping (Result<AuthResponse, APIError>) -> Void) {
-        let headers: HTTPHeaders = ["Content-Type": "application/json"]
-        gateway.request("/auth/register", method: .post, parameters: userData, headers: headers, completion: completion)
+        gateway.request("/auth/register", method: .post, parameters: userData, headers: nil, completion: completion)
     }
     
-    // 로그인
+    // Login with email and password
     func login(email: String, password: String, completion: @escaping (Result<AuthResponse, APIError>) -> Void) {
         let parameters: [String: Any] = ["email": email, "password": password]
-        let headers: HTTPHeaders = ["Content-Type": "application/json"]
-        gateway.request("/auth/login", method: .post, parameters: parameters, headers: headers, completion: completion)
+        gateway.request("/auth/login", method: .post, parameters: parameters, headers: nil, completion: completion)
     }
 }
 
-// DTO 정의
+// DTO definitions
 struct AuthResponse: Decodable {
     let success: Bool
     let token: String
     let refreshToken: String
-    let user: UserDTO
-}
-
-struct UserDTO: Decodable {
-    let id: Int
-    let email: String
-    let role: String
-    let name: String?
+    let user: AppUserDTO
+    
+    enum CodingKeys: String, CodingKey {
+        case success, token, user
+        case refreshToken = "refresh_token"  // snake_case 필드명 매핑
+    }
 }

@@ -1,18 +1,18 @@
 import Foundation
 
 class LoginViewModel {
-    // 결과 상태를 나타내는 enum
+    // Enum representing result state
     enum LoginState {
         case idle
         case loading
-        case success(user: UserDTO)
+        case success(user: AppUserDTO)
         case failure(error: Error)
     }
     
-    // 상태 변경 콜백
+    // State change callback
     var onStateChanged: ((LoginState) -> Void)?
     
-    // 현재 상태
+    // Current state
     private(set) var state: LoginState = .idle {
         didSet {
             onStateChanged?(state)
@@ -21,18 +21,18 @@ class LoginViewModel {
     
     private let authService = AuthService.shared
     
-    // 로그인 액션
+    // Login action
     func login(email: String, password: String) {
-        // 입력 유효성 검사
+        // Input validation
         guard isValidEmail(email), !password.isEmpty else {
             state = .failure(error: NSError(domain: "com.homecleaningapp", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid email or empty password"]))
             return
         }
         
-        // 로딩 상태로 변경
+        // Change to loading state
         state = .loading
         
-        // 인증 서비스 호출
+        // Call authentication service
         authService.login(email: email, password: password) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
@@ -45,7 +45,7 @@ class LoginViewModel {
         }
     }
     
-    // 이메일 유효성 검사
+    // Email validation
     private func isValidEmail(_ email: String) -> Bool {
         let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
         let emailPred = NSPredicate(format:"SELF MATCHES %@", emailRegEx)

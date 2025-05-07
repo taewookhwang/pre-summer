@@ -1,5 +1,4 @@
 import Foundation
-import Alamofire
 
 class RequestServiceAPI {
     static let shared = RequestServiceAPI()
@@ -7,9 +6,9 @@ class RequestServiceAPI {
     
     private init() {}
     
-    // È } Ý1
+    // Create new reservation
     func createReservation(request: ReservationRequest, completion: @escaping (Result<Reservation, Error>) -> Void) {
-        let headers: HTTPHeaders = [
+        let headers: [String: String] = [
             "Content-Type": "application/json",
             "Authorization": "Bearer \(AuthService.shared.getAccessToken() ?? "")"
         ]
@@ -31,9 +30,9 @@ class RequestServiceAPI {
         }
     }
     
-    // } 
-    func updateReservation(id: Int, request: ReservationRequest, completion: @escaping (Result<Reservation, Error>) -> Void) {
-        let headers: HTTPHeaders = [
+    // Update existing reservation
+    func updateReservation(id: String, request: ReservationRequest, completion: @escaping (Result<Reservation, Error>) -> Void) {
+        let headers: [String: String] = [
             "Content-Type": "application/json",
             "Authorization": "Bearer \(AuthService.shared.getAccessToken() ?? "")"
         ]

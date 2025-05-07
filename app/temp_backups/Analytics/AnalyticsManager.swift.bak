@@ -1,0 +1,36 @@
+import Foundation
+
+class AnalyticsManager {
+    private static let shared = AnalyticsManager()
+    
+    private var logger: AnalyticsLoggerProtocol?
+    
+    private init() {}
+    
+    // MARK: - Public Methods
+    
+    static func configure(with logger: AnalyticsLoggerProtocol) {
+        shared.logger = logger
+    }
+    
+    static func trackEvent(_ event: AnalyticsEvent) {
+        guard let logger = shared.logger else {
+            Logger.warning("Analytics logger not configured. Event not tracked: \(event)")
+            return
+        }
+        
+        logger.logEvent(event)
+    }
+    
+    static func trackConsumerEvent(_ event: ConsumerEvent) {
+        trackEvent(event)
+    }
+    
+    static func trackTechnicianEvent(_ event: TechnicianEvent) {
+        trackEvent(event)
+    }
+    
+    static func trackBusinessEvent(_ event: BusinessEvent) {
+        trackEvent(event)
+    }
+}

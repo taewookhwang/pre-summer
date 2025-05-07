@@ -43,6 +43,22 @@ class AuthService {
         }
     }
     
+    func logout(completion: @escaping (Result<Bool, APIError>) -> Void) {
+        // 토큰 삭제
+        _ = keychain.deleteToken(forKey: "accessToken")
+        _ = keychain.deleteToken(forKey: "refreshToken")
+        
+        // 필요한 경우 서버에 로그아웃 요청을 보낼 수 있음
+        // authAPI.logout { result in
+        //     completion(result)
+        // }
+        
+        // 지금은 항상 성공으로 처리
+        DispatchQueue.main.async {
+            completion(.success(true))
+        }
+    }
+    
     func getAccessToken() -> String? {
         keychain.getToken(forKey: "accessToken")
     }

@@ -1,5 +1,4 @@
 import Foundation
-import Alamofire
 
 class ServiceHistoryAPI {
     static let shared = ServiceHistoryAPI()
@@ -7,9 +6,9 @@ class ServiceHistoryAPI {
     
     private init() {}
     
-    // } ©] på
+    // Get reservation list
     func getReservations(parameters: [String: Any], completion: @escaping (Result<[Reservation], Error>) -> Void) {
-        let headers: HTTPHeaders = [
+        let headers: [String: String] = [
             "Content-Type": "application/json",
             "Authorization": "Bearer \(AuthService.shared.getAccessToken() ?? "")"
         ]
@@ -24,9 +23,9 @@ class ServiceHistoryAPI {
         }
     }
     
-    // } ¡8 på
-    func getReservationDetails(id: Int, completion: @escaping (Result<Reservation, Error>) -> Void) {
-        let headers: HTTPHeaders = [
+    // Get reservation details
+    func getReservationDetails(id: String, completion: @escaping (Result<Reservation, Error>) -> Void) {
+        let headers: [String: String] = [
             "Content-Type": "application/json",
             "Authorization": "Bearer \(AuthService.shared.getAccessToken() ?? "")"
         ]
@@ -42,7 +41,7 @@ class ServiceHistoryAPI {
     }
 }
 
-// API Qı lp¥
+// API response structures
 struct ReservationsResponse: Decodable {
     let success: Bool
     let reservations: [Reservation]

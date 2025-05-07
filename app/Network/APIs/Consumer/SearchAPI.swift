@@ -1,5 +1,4 @@
 import Foundation
-import Alamofire
 
 class SearchAPI {
     static let shared = SearchAPI()
@@ -7,9 +6,9 @@ class SearchAPI {
     
     private init() {}
     
-    // D§ ©] på
+    // Get service list
     func getServices(parameters: [String: Any], completion: @escaping (Result<[Service], Error>) -> Void) {
-        let headers: HTTPHeaders = [
+        let headers: [String: String] = [
             "Content-Type": "application/json",
             "Authorization": "Bearer \(AuthService.shared.getAccessToken() ?? "")"
         ]
@@ -24,9 +23,9 @@ class SearchAPI {
         }
     }
     
-    // D§ ¡8 på
-    func getServiceDetails(id: Int, completion: @escaping (Result<Service, Error>) -> Void) {
-        let headers: HTTPHeaders = [
+    // Get service details
+    func getServiceDetails(id: String, completion: @escaping (Result<Service, Error>) -> Void) {
+        let headers: [String: String] = [
             "Content-Type": "application/json",
             "Authorization": "Bearer \(AuthService.shared.getAccessToken() ?? "")"
         ]
@@ -41,9 +40,9 @@ class SearchAPI {
         }
     }
     
-    // D§ tL‡¨ ©] på
+    // Get service category list
     func getServiceCategories(completion: @escaping (Result<[ServiceCategory], Error>) -> Void) {
-        let headers: HTTPHeaders = [
+        let headers: [String: String] = [
             "Content-Type": "application/json",
             "Authorization": "Bearer \(AuthService.shared.getAccessToken() ?? "")"
         ]
@@ -59,7 +58,7 @@ class SearchAPI {
     }
 }
 
-// API Qı lp¥
+// API response structures
 struct ServicesResponse: Decodable {
     let success: Bool
     let services: [Service]

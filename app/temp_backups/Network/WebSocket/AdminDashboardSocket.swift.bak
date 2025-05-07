@@ -1,0 +1,170 @@
+import Foundation
+
+class AdminDashboardSocket {
+    static let shared = AdminDashboardSocket()
+    
+    // Callback functions
+    var onJobUpdate: (([Job]) -> Void)?
+    var onLocationUpdate: ((Int, (latitude: Double, longitude: Double)) -> Void)?
+    var onDisconnect: (() -> Void)?
+    
+    private let webSocketManager = WebSocketManager.shared
+    private var isConnected = false
+    
+    private init() {
+        // Set up message handling methods for WebSocketManager
+        webSocketManager.onStringMessage = { [weak self] message in
+            self?.handleMessage(message)
+        }
+        
+        webSocketManager.onDisconnect = { [weak self] _ in
+            self?.isConnected = false
+            self?.onDisconnect?()
+        }
+    }
+    
+    func connect(completion: @escaping (Result<Void, Error>) -> Void) {
+        // In a real implementation, would use the actual server URL
+        let serverUrl = URL(string: "wss://api.homecleaning.com/admin/dashboard")!
+        
+        // Connect via WebSocketManager
+        webSocketManager.connect(url: serverUrl, headers: nil) { [weak self] result in
+            guard let self = self else { return }
+            
+            switch result {
+            case .success:
+                self.isConnected = true
+                completion(.success(()))
+                
+                #if DEBUG
+                // Generate dummy data in development mode only
+                self.simulateDataFlow()
+                #endif
+                
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
+    }
+    
+    func disconnect() {
+        webSocketManager.disconnect()
+        isConnected = false
+    }
+    
+    // MARK: - Message Processing
+    
+    private func handleMessage(_ message: String) {
+        guard let data = message.data(using: .utf8) else { return }
+        
+        do {
+            // Check message type
+            if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let type = json["type"] as? String {
+                
+                switch type {
+                case "job_update":
+                    handleJobUpdate(data)
+                case "location_update":
+                    handleLocationUpdate(data)
+                default:
+                    Logger.warning("Unknown message type: \(type)")
+                }
+            }
+        } catch {
+            Logger.error("Failed to parse WebSocket message: \(error.localizedDescription)")
+        }
+    }
+    
+    private func handleJobUpdate(_ data: Data) {
+        do {
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            
+            // Decode to JobUpdateResponse model
+            let response = try decoder.decode(JobUpdateResponse.self, from: data)
+            onJobUpdate?(response.jobs)
+        } catch {
+            Logger.error("Failed to decode job update: \(error.localizedDescription)")
+        }
+    }
+    
+    private func handleLocationUpdate(_ data: Data) {
+        do {
+            let decoder = JSONDecoder()
+            
+            // Decode to LocationUpdateResponse model
+            let response = try decoder.decode(LocationUpdateResponse.self, from: data)
+            onLocationUpdate?(response.technicianId, 
+                             (latitude: response.location.latitude, 
+                              longitude: response.location.longitude))
+        } catch {
+            Logger.error("Failed to decode location update: \(error.localizedDescription)")
+        }
+    }
+    
+    // MARK: - Dummy Data Generation (for development)
+    
+    private func simulateDataFlow() {
+        // Create sample job data
+        let demoJob1 = Job(
+            id: "1",
+            reservationId: "101",
+            technicianId: 201,
+            status: .inProgress,
+            startTime: Date(),
+            endTime: nil,
+            notes: nil,
+            createdAt: Date(),
+            updatedAt: Date(),
+            reservation: nil,
+            technician: nil
+        )
+        
+        let demoJob2 = Job(
+            id: "2",
+            reservationId: "102",
+            technicianId: 202,
+            status: .onWay,
+            startTime: nil,
+            endTime: nil,
+            notes: nil,
+            createdAt: Date(),
+            updatedAt: Date(),
+            reservation: nil,
+            technician: nil
+        )
+        
+        // Generate job update event
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            self?.onJobUpdate?([demoJob1, demoJob2])
+        }
+        
+        // Generate location update events
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+            self?.onLocationUpdate?(201, (latitude: 37.5326, longitude: 127.0246))
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+            self?.onLocationUpdate?(202, (latitude: 37.5296, longitude: 127.0297))
+        }
+    }
+}
+
+// MARK: - Response Models
+
+struct JobUpdateResponse: Decodable {
+    let type: String
+    let jobs: [Job]
+}
+
+struct LocationUpdateResponse: Decodable {
+    let type: String
+    let technicianId: Int
+    let location: Location
+    
+    struct Location: Decodable {
+        let latitude: Double
+        let longitude: Double
+    }
+}

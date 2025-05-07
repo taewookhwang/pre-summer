@@ -26,25 +26,25 @@ class AuthCoordinator: CoordinatorProtocol {
         navigationController.pushViewController(signupVC, animated: true)
     }
     
-    // 회원가입 성공 후 알림을 표시하는 메서드
+    // Method to display a notification after successful registration
     func showRegistrationSuccess() {
-        // 등록 성공 알림 표시
+        // Display registration success notification
         let alert = UIAlertController(
-            title: "등록 성공",
-            message: "계정이 성공적으로 생성되었습니다. 로그인 화면으로 이동합니다.",
+            title: "Registration Success",
+            message: "Your account has been successfully created. Going to the login screen.",
             preferredStyle: .alert
         )
         
-        alert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
-            // 로그인 화면으로 이동
+        alert.addAction(UIAlertAction(title: "OK", style: .default) { [weak self] _ in
+            // Go to login screen
             self?.showLogin()
         })
         
-        // 현재 보이는 화면에 알림 표시
+        // Display notification on the currently visible screen
         navigationController.visibleViewController?.present(alert, animated: true)
     }
     
-    // 로그인 성공 후 사용자 역할에 따라 적절한 홈 화면으로 이동
+    // Navigate to the appropriate home screen based on user role after successful login
     func showHome(for user: UserDTO) {
         switch user.role {
         case "consumer":
@@ -54,7 +54,7 @@ class AuthCoordinator: CoordinatorProtocol {
         case "admin":
             showAdminHome()
         default:
-            showConsumerHome() // 기본값
+            showConsumerHome() // Default
         }
     }
 

@@ -1,5 +1,4 @@
 import Foundation
-import Alamofire
 
 class CancelAPI {
     static let shared = CancelAPI()
@@ -7,9 +6,9 @@ class CancelAPI {
     
     private init() {}
     
-    // } èŒ
+    // Cancel a reservation
     func cancelReservation(request: CancellationRequest, completion: @escaping (Result<Bool, Error>) -> Void) {
-        let headers: HTTPHeaders = [
+        let headers: [String: String] = [
             "Content-Type": "application/json",
             "Authorization": "Bearer \(AuthService.shared.getAccessToken() ?? "")"
         ]
@@ -30,7 +29,7 @@ class CancelAPI {
     }
 }
 
-// API Qõ lp´
+// API response structure
 struct CancelResponse: Decodable {
     let success: Bool
     let message: String

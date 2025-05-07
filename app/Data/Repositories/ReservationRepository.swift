@@ -9,7 +9,7 @@ class ReservationRepository {
     
     private init() {}
     
-    // \¸ } på
+    // Get recent reservations
     func getRecentReservations(completion: @escaping (Result<[Reservation], Error>) -> Void) {
         let params: [String: Any] = ["limit": 5, "sort": "date_desc"]
         
@@ -18,7 +18,7 @@ class ReservationRepository {
         }
     }
     
-    // } ¥Ì på (D0¡ Ïh)
+    // Get reservation history (filter by status)
     func getReservationHistory(status: ReservationStatus? = nil, completion: @escaping (Result<[Reservation], Error>) -> Void) {
         var params: [String: Any] = [:]
         
@@ -31,21 +31,21 @@ class ReservationRepository {
         }
     }
     
-    // } ¡8 på
-    func getReservationDetails(id: Int, completion: @escaping (Result<Reservation, Error>) -> Void) {
+    // Get reservation details
+    func getReservationDetails(id: String, completion: @escaping (Result<Reservation, Error>) -> Void) {
         serviceHistoryAPI.getReservationDetails(id: id) { result in
             completion(result)
         }
     }
     
-    // » } ›1
+    // Create new reservation
     func createReservation(request: ReservationRequest, completion: @escaping (Result<Reservation, Error>) -> Void) {
         requestServiceAPI.createReservation(request: request) { result in
             completion(result)
         }
     }
     
-    // } Ëå
+    // Cancel reservation
     func cancelReservation(request: CancellationRequest, completion: @escaping (Result<Bool, Error>) -> Void) {
         cancelAPI.cancelReservation(request: request) { result in
             completion(result)
