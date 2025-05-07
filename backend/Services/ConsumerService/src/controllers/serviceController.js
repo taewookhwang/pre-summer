@@ -82,6 +82,36 @@ const serviceController = {
         }
       });
     }
+  },
+  
+  /**
+   * Get all service categories
+   */
+  getServiceCategories: async (req, res) => {
+    try {
+      // 서비스 카테고리 목록 - 실제로는 데이터베이스에서 가져와야 함
+      const categories = [
+        { id: "cleaning", name: "청소" },
+        { id: "laundry", name: "세탁" },
+        { id: "dishes", name: "설거지" },
+        { id: "kitchen", name: "주방 정리" },
+        { id: "bathroom", name: "화장실 청소" },
+        { id: "deepcleaning", name: "특수 청소" }
+      ];
+      
+      return res.status(200).json({
+        success: true,
+        categories: categories
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to fetch service categories',
+          details: error.message
+        }
+      });
+    }
   }
 };
 

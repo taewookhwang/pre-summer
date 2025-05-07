@@ -111,6 +111,31 @@ app.use('/api/admin',
   )
 );
 
+// iOS 앱 호환을 위한 직접 엔드포인트 라우팅
+// 서비스 관련 엔드포인트
+app.use('/api/services', 
+  createRequestLogger('SERVICES-DIRECT'),
+  createProxyMiddleware(
+    createProxyOptions(
+      process.env.CONSUMER_SERVICE_PORT || 3002,
+      { '^/api/services': '/api/services' },
+      'Services API'
+    )
+  )
+);
+
+// 예약 관련 엔드포인트
+app.use('/api/reservations', 
+  createRequestLogger('RESERVATIONS-DIRECT'),
+  createProxyMiddleware(
+    createProxyOptions(
+      process.env.CONSUMER_SERVICE_PORT || 3002,
+      { '^/api/reservations': '/api/reservations' },
+      'Reservations API'
+    )
+  )
+);
+
 // 프록시 미들웨어 등록 후 로그
 console.log('프록시 미들웨어 등록 후');
 
