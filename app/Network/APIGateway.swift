@@ -1,19 +1,14 @@
 import Foundation
 
-enum APIError: Error {
-    case networkFailure(Error)
-    case invalidResponse
-    case serverError(statusCode: Int, message: String?)
-    case decodingError(Error)
-}
+// APIError는 Network/Error/APIError.swift에 정의되어 있습니다
 
 class APIGateway {
     static let shared = APIGateway()
     
     // 개발 환경 URL 설정
     #if DEBUG
-    private let baseURL = "http://localhost:3000/api" // 로컬 개발 환경
-    // private let baseURL = "http://172.30.1.88:3000/api" // 기존 IP 주소 (필요시 주석 해제)
+    // private let baseURL = "http://localhost:3000/api" // 로컬 개발 환경
+    private let baseURL = "http://172.30.1.88:3000/api" // 개발 테스트용 IP 주소
     #else
     private let baseURL = "https://api.yourproductionserver.com/api" // 프로덕션 서버 (실제 URL로 변경 필요)
     #endif

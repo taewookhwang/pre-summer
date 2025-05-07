@@ -4,47 +4,58 @@ class AppCoordinator: CoordinatorProtocol {
     var childCoordinators: [CoordinatorProtocol] = []
     var navigationController: UINavigationController
     
+    private let authService = AuthService.shared
+    private let userRepository = UserRepository.shared
+    
     init(navigationController: UINavigationController) {
         self.navigationController = navigationController
     }
     
     func start() {
         // 토큰 확인하여 로그인 상태 체크
-        if KeychainManager.shared.getToken(forKey: "accessToken") != nil {
-            // 임시 구현 - 실제 화면이 구현되면 교체
-            let loggedInVC = UIViewController()
-            loggedInVC.view.backgroundColor = .white
-            loggedInVC.title = "Already Logged In"
-            navigationController.setViewControllers([loggedInVC], animated: false)
+        if authService.isLoggedIn() {
+            // 로그인된 사용자 처리
+            navigateToUserHomeScreen()
         } else {
             // 로그인 필요
-            let authCoordinator = AuthCoordinator(navigationController: navigationController)
-            childCoordinators.append(authCoordinator)
-            authCoordinator.start()
+            showAuthScreen()
         }
     }
     
+    private func navigateToUserHomeScreen() {
+        // 사용자 역할에 따라 적절한 코디네이터 시작
+        if let userRole = authService.getCurrentUserRole() {
+            switch userRole {
+            case "consumer":
+                let consumerCoordinator = ConsumerCoordinator(navigationController: navigationController)
+                childCoordinators.append(consumerCoordinator)
+                consumerCoordinator.start()
+                
+            case "technician":
+                let technicianCoordinator = TechnicianCoordinator(navigationController: navigationController)
+                childCoordinators.append(technicianCoordinator)
+                technicianCoordinator.start()
+                
+            case "admin":
+                let adminCoordinator = AdminCoordinator(navigationController: navigationController)
+                childCoordinators.append(adminCoordinator)
+                adminCoordinator.start()
+                
+            default:
+                // 알 수 없는 역할 처리
+                print("Unknown user role: \(userRole)")
+                showAuthScreen()
+            }
+        } else {
+            // 사용자 역할을 찾을 수 없는 경우
+            print("User role not found, redirecting to login")
+            showAuthScreen()
+        }
+    }
     
-    
-    
-    
-    
-    
-    
-    
-    
-    //func start() {
-        // 토큰 확인하여 로그인 상태 체크
-     //   if KeychainManager.shared.getToken(forKey: "accessToken") != nil {
-            // 이미 로그인된 사용자
-            // TODO: 토큰 유효성 검사 후 홈 화면으로 이동
-     //       let homeVC = HomeVC()
-      //      navigationController.setViewControllers([homeVC], animated: false)
-      //  } else {
-     //       // 로그인 필요
-      //      let authCoordinator = AuthCoordinator(navigationController: navigationController)
-     //       childCoordinators.append(authCoordinator)
-     //       authCoordinator.start()
-   //     }
-   // }
+    private func showAuthScreen() {
+        let authCoordinator = AuthCoordinator(navigationController: navigationController)
+        childCoordinators.append(authCoordinator)
+        authCoordinator.start()
+    }
 }

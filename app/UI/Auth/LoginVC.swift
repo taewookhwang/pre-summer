@@ -14,6 +14,7 @@ class LoginVC: UIViewController {
         super.viewDidLoad()
         setupUI()
         bindViewModel()
+        setupTestLoginButtons()
     }
     
     private func setupUI() {
@@ -65,6 +66,26 @@ class LoginVC: UIViewController {
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
+    }
+    
+    // MARK: - 개발용 테스트 로그인 버튼 설정
+    private func setupTestLoginButtons() {
+        #if DEBUG
+        // 테스트 로그인 버튼 추가
+        TestLoginHelper.shared.createTestLoginButtons(on: self) { [weak self] in
+            guard let self = self else { return }
+            // 로그인 성공 후 처리
+            self.coordinator?.showHome(for: UserDTO(
+                id: UserRepository.shared.getCurrentUser()?.id ?? 0,
+                email: UserRepository.shared.getCurrentUser()?.email ?? "",
+                role: UserRepository.shared.getCurrentUser()?.role ?? "consumer",
+                name: UserRepository.shared.getCurrentUser()?.name,
+                phone: UserRepository.shared.getCurrentUser()?.phone,
+                address: UserRepository.shared.getCurrentUser()?.address,
+                createdAt: nil
+            ))
+        }
+        #endif
     }
     
     private func bindViewModel() {

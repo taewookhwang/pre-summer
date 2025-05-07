@@ -1,4 +1,5 @@
 import Foundation
+import Network
 
 struct AuthAPI {
     static let shared = AuthAPI()
@@ -22,9 +23,13 @@ struct AuthResponse: Decodable {
     let token: String
     let refreshToken: String
     let user: AppUserDTO
+    let expiresIn: Int?
+    let tokenType: String?
     
     enum CodingKeys: String, CodingKey {
         case success, token, user
         case refreshToken = "refresh_token"  // snake_case 필드명 매핑
+        case expiresIn = "expires_in"
+        case tokenType = "token_type"
     }
 }
