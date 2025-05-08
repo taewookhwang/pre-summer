@@ -201,11 +201,13 @@ public struct Message {
 public struct DummyServiceCategory {
     public var id: String
     public var name: String
+    public var description: String?
     public var imageURL: String?
     
-    public init(id: String, name: String, imageURL: String? = nil) {
+    public init(id: String, name: String, description: String? = nil, imageURL: String? = nil) {
         self.id = id
         self.name = name
+        self.description = description
         self.imageURL = imageURL
     }
 }

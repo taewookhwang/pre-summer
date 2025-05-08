@@ -9,25 +9,40 @@ class ReservationRepository {
     
     private init() {}
     
+    // Helper function to convert ReservationsResponse to tuple
+    private func convertToTuple(_ response: ReservationsResponse) -> ([Reservation], PaginationMeta?) {
+        return (response.reservations, response.pagination)
+    }
+    
     // Get recent reservations
-    func getRecentReservations(completion: @escaping (Result<[Reservation], Error>) -> Void) {
-        let params: [String: Any] = ["limit": 5, "sort": "date_desc"]
+    func getRecentReservations(page: Int = 1, limit: Int = 5, completion: @escaping (Result<([Reservation], PaginationMeta?), Error>) -> Void) {
+        let params: [String: Any] = ["page": page, "limit": limit, "sort": "date_desc"]
         
         serviceHistoryAPI.getReservations(parameters: params) { result in
-            completion(result)
+            switch result {
+            case .success(let response):
+                completion(.success(self.convertToTuple(response)))
+            case .failure(let error):
+                completion(.failure(error))
+            }
         }
     }
     
     // Get reservation history (filter by status)
-    func getReservationHistory(status: ReservationStatus? = nil, completion: @escaping (Result<[Reservation], Error>) -> Void) {
-        var params: [String: Any] = [:]
+    func getReservationHistory(status: ReservationStatus? = nil, page: Int = 1, limit: Int = 20, completion: @escaping (Result<([Reservation], PaginationMeta?), Error>) -> Void) {
+        var params: [String: Any] = ["page": page, "limit": limit]
         
         if let status = status {
             params["status"] = status.rawValue
         }
         
         serviceHistoryAPI.getReservations(parameters: params) { result in
-            completion(result)
+            switch result {
+            case .success(let response):
+                completion(.success(self.convertToTuple(response)))
+            case .failure(let error):
+                completion(.failure(error))
+            }
         }
     }
     

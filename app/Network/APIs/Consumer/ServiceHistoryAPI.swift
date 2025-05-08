@@ -7,7 +7,7 @@ class ServiceHistoryAPI {
     private init() {}
     
     // Get reservation list
-    func getReservations(parameters: [String: Any], completion: @escaping (Result<[Reservation], Error>) -> Void) {
+    func getReservations(parameters: [String: Any], completion: @escaping (Result<ReservationsResponse, Error>) -> Void) {
         let headers: [String: String] = [
             "Content-Type": "application/json",
             "Authorization": "Bearer \(AuthService.shared.getAccessToken() ?? "")"
@@ -16,7 +16,7 @@ class ServiceHistoryAPI {
         gateway.request("/reservations", method: .get, parameters: parameters, headers: headers) { (result: Result<ReservationsResponse, APIError>) in
             switch result {
             case .success(let response):
-                completion(.success(response.reservations))
+                completion(.success(response))
             case .failure(let error):
                 completion(.failure(error))
             }
@@ -45,6 +45,7 @@ class ServiceHistoryAPI {
 struct ReservationsResponse: Decodable {
     let success: Bool
     let reservations: [Reservation]
+    let pagination: PaginationMeta?
 }
 
 struct ReservationResponse: Decodable {

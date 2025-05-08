@@ -7,21 +7,38 @@ class ServiceRepository {
     
     private init() {}
     
+    // Helper function to convert ServicesResponse to tuple
+    private func convertToTuple(_ response: ServicesResponse) -> ([Service], PaginationMeta?) {
+        return (response.services, response.pagination)
+    }
+    
     // Get featured services
-    func getFeaturedServices(completion: @escaping (Result<[Service], Error>) -> Void) {
-        let params: [String: Any] = ["featured": true, "limit": 10]
+    func getFeaturedServices(page: Int = 1, limit: Int = 10, completion: @escaping (Result<([Service], PaginationMeta?), Error>) -> Void) {
+        var params: [String: Any] = ["featured": true, "limit": limit, "page": page]
         
         servicesAPI.getServices(parameters: params) { result in
-            completion(result)
+            switch result {
+            case .success(let response):
+                completion(.success(self.convertToTuple(response)))
+            case .failure(let error):
+                completion(.failure(error))
+            }
         }
     }
     
     // Get service list (with filtering)
-    func getServices(with filter: ServiceFilter, completion: @escaping (Result<[Service], Error>) -> Void) {
-        let params = filter.toParameters()
+    func getServices(with filter: ServiceFilter, page: Int = 1, limit: Int = 20, completion: @escaping (Result<([Service], PaginationMeta?), Error>) -> Void) {
+        var params = filter.toParameters()
+        params["page"] = page
+        params["limit"] = limit
         
         servicesAPI.getServices(parameters: params) { result in
-            completion(result)
+            switch result {
+            case .success(let response):
+                completion(.success(self.convertToTuple(response)))
+            case .failure(let error):
+                completion(.failure(error))
+            }
         }
     }
     
@@ -40,11 +57,16 @@ class ServiceRepository {
     }
     
     // Search services
-    func searchServices(query: String, completion: @escaping (Result<[Service], Error>) -> Void) {
-        let params: [String: Any] = ["query": query]
+    func searchServices(query: String, page: Int = 1, limit: Int = 20, completion: @escaping (Result<([Service], PaginationMeta?), Error>) -> Void) {
+        var params: [String: Any] = ["query": query, "page": page, "limit": limit]
         
         servicesAPI.getServices(parameters: params) { result in
-            completion(result)
+            switch result {
+            case .success(let response):
+                completion(.success(self.convertToTuple(response)))
+            case .failure(let error):
+                completion(.failure(error))
+            }
         }
     }
 }

@@ -51,7 +51,7 @@ struct Service: Codable {
 struct ServiceCategory: Codable {
     let id: String
     let name: String
-    let description: String
+    let description: String?
     let imageURL: String?
     
     enum CodingKeys: String, CodingKey {
@@ -60,7 +60,7 @@ struct ServiceCategory: Codable {
     }
     
     // Standard initializer for creating instances
-    init(id: String, name: String, description: String, imageURL: String? = nil) {
+    init(id: String, name: String, description: String? = nil, imageURL: String? = nil) {
         self.id = id
         self.name = name
         self.description = description

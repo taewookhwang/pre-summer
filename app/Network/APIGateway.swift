@@ -7,8 +7,8 @@ class APIGateway {
     
     // 개발 환경 URL 설정
     #if DEBUG
-    // private let baseURL = "http://localhost:3000/api" // 로컬 개발 환경
-    private let baseURL = "http://172.30.1.88:3000/api" // 개발 테스트용 IP 주소
+    private let baseURL = "http://localhost:3000/api" // 로컬 개발 환경
+    // private let baseURL = "http://172.30.1.88:3000/api" // 개발 테스트용 IP 주소
     #else
     private let baseURL = "https://api.yourproductionserver.com/api" // 프로덕션 서버 (실제 URL로 변경 필요)
     #endif
@@ -74,8 +74,17 @@ class APIGateway {
             }
         }
         
-        // URLSession 사용
-        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+        // URLSession 사용 (큰 응답 데이터 처리를 위한 설정)
+        let configuration = URLSessionConfiguration.default
+        // 최대 응답 크기 및 메모리 용량 증가
+        configuration.httpMaximumConnectionsPerHost = 10
+        configuration.requestCachePolicy = .useProtocolCachePolicy
+        configuration.timeoutIntervalForRequest = 30.0 // 타임아웃 증가
+        configuration.timeoutIntervalForResource = 60.0 // 리소스 타임아웃 증가
+        
+        let session = URLSession(configuration: configuration)
+        
+        let task = session.dataTask(with: request) { data, response, error in
             // 에러 처리
             if let error = error {
                 print("Network error: \(error)")

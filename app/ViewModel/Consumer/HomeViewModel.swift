@@ -35,6 +35,12 @@ class HomeViewModel {
     private(set) var recentReservations: [Reservation] = []
     private(set) var categories: [ServiceCategory] = []
     
+    // Pagination
+    private(set) var servicesPagination: PaginationMeta?
+    private(set) var reservationsPagination: PaginationMeta?
+    private(set) var currentServicesPage: Int = 1
+    private(set) var currentReservationsPage: Int = 1
+    
     // State
     private(set) var state: ViewState = .idle {
         didSet {
@@ -48,6 +54,8 @@ class HomeViewModel {
     var reservationsDidLoad: (() -> Void)?
     var categoriesDidLoad: (() -> Void)?
     var errorDidOccur: ((String) -> Void)?
+    var loadMoreServicesDidComplete: (() -> Void)?
+    var loadMoreReservationsDidComplete: (() -> Void)?
     
     // Services
     private let serviceRepository = ServiceRepository.shared
@@ -95,32 +103,90 @@ class HomeViewModel {
     }
     
     private func loadFeaturedServices(completion: @escaping () -> Void) {
-        serviceRepository.getFeaturedServices { [weak self] result in
-            DispatchQueue.main.async {
+        serviceRepository.getFeaturedServices(page: currentServicesPage) { [weak self] result in
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                
                 switch result {
-                case .success(let services):
-                    self?.featuredServices = services
+                case .success(let response):
+                    if self.currentServicesPage == 1 {
+                        self.featuredServices = response.0
+                    } else {
+                        self.featuredServices.append(contentsOf: response.0)
+                    }
+                    self.servicesPagination = response.1
                     completion()
                 case .failure(let error):
-                    self?.state = .error(error.localizedDescription)
-                    self?.errorDidOccur?(error.localizedDescription)
+                    self.state = .error(error.localizedDescription)
+                    self.errorDidOccur?(error.localizedDescription)
                     completion()
                 }
             }
         }
     }
     
-    private func loadRecentReservations(completion: @escaping () -> Void) {
-        reservationRepository.getRecentReservations { [weak self] result in
-            DispatchQueue.main.async {
+    func loadMoreFeaturedServices() {
+        guard let pagination = servicesPagination, pagination.hasNextPage else { return }
+        
+        currentServicesPage += 1
+        serviceRepository.getFeaturedServices(page: currentServicesPage) { [weak self] result in
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                
                 switch result {
-                case .success(let reservations):
-                    self?.recentReservations = reservations
+                case .success(let response):
+                    self.featuredServices.append(contentsOf: response.0)
+                    self.servicesPagination = response.1
+                    self.loadMoreServicesDidComplete?()
+                case .failure(let error):
+                    self.errorDidOccur?(error.localizedDescription)
+                    // 페이지 증가를 원래대로 되돌립니다
+                    self.currentServicesPage -= 1
+                }
+            }
+        }
+    }
+    
+    private func loadRecentReservations(completion: @escaping () -> Void) {
+        reservationRepository.getRecentReservations(page: currentReservationsPage) { [weak self] result in
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                
+                switch result {
+                case .success(let response):
+                    if self.currentReservationsPage == 1 {
+                        self.recentReservations = response.0
+                    } else {
+                        self.recentReservations.append(contentsOf: response.0)
+                    }
+                    self.reservationsPagination = response.1
                     completion()
                 case .failure(let error):
-                    self?.state = .error(error.localizedDescription)
-                    self?.errorDidOccur?(error.localizedDescription)
+                    self.state = .error(error.localizedDescription)
+                    self.errorDidOccur?(error.localizedDescription)
                     completion()
+                }
+            }
+        }
+    }
+    
+    func loadMoreReservations() {
+        guard let pagination = reservationsPagination, pagination.hasNextPage else { return }
+        
+        currentReservationsPage += 1
+        reservationRepository.getRecentReservations(page: currentReservationsPage) { [weak self] result in
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                
+                switch result {
+                case .success(let response):
+                    self.recentReservations.append(contentsOf: response.0)
+                    self.reservationsPagination = response.1
+                    self.loadMoreReservationsDidComplete?()
+                case .failure(let error):
+                    self.errorDidOccur?(error.localizedDescription)
+                    // 페이지 증가를 원래대로 되돌립니다
+                    self.currentReservationsPage -= 1
                 }
             }
         }
