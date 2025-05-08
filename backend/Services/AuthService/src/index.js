@@ -27,7 +27,8 @@ app.use((req, res, next) => {
 });
 
 // 라우트
-app.use('/api', authRoutes);
+// 변경: /api 접두사 제거하여 Gateway 설정과 일치시킴
+app.use('/', authRoutes);
 
 // 기본 라우트
 app.get('/', (req, res) => {
