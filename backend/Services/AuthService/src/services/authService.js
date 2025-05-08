@@ -147,33 +147,41 @@ exports.refreshUserToken = async (refreshToken) => {
     }
 
     // 개발 환경에서 테스트 토큰 처리 - iOS 앱 테스트 용도
-    if (process.env.NODE_ENV === 'development' && refreshToken.startsWith('test_refresh_')) {
+    if (process.env.NODE_ENV === 'development' && 
+        (refreshToken.startsWith('test_refresh_') || refreshToken.startsWith('test_token_') || refreshToken.startsWith('test_refre'))) {
       console.log('Development mode - Using test refresh token');
       
-      // 테스트 토큰에서 사용자 역할과 ID 추출 (예: test_refresh_consumer_123)
+      // 테스트 토큰에서 사용자 역할과 ID 추출
+      // 형식1: test_refresh_consumer_123
+      // 형식2: test_token_consumer_123
+      // 형식3: test_refre...
       const parts = refreshToken.split('_');
-      const role = parts.length > 2 ? parts[2] : 'consumer';
-      const userId = parts.length > 3 ? parts[3] : '1';
+      
+      // 기본값 설정
+      let role = 'consumer';
+      let userId = '1';
+      
+      // 토큰 형식에 따라 다르게 처리
+      if (parts.length > 2) {
+        // 세 번째 부분이 role
+        if (parts[2] !== 'token') { // "token"은 role 값이 아님
+          role = parts[2];
+        }
+        if (parts.length > 3) {
+          userId = parts[3];
+        }
+      }
       
       console.log(`Dev test: Using role=${role}, userId=${userId}`);
       
-      // 해당 역할을 가진 사용자 찾기 또는 생성
-      let user = await User.findOne({ where: { role } });
-      
-      if (!user) {
-        // 테스트용 사용자가 없으면 첫 번째 사용자 가져오기
-        user = await User.findByPk(1);
-        
-        if (!user) {
-          console.log('No test user found - Creating mock user object');
-          // 모의 사용자 객체 생성
-          user = {
-            id: userId,
-            email: `test_${role}@example.com`,
-            role: role
-          };
-        }
-      }
+      // 테스트 환경에서는 DB 쿼리 없이 바로 모의 사용자 객체 생성
+      console.log('Creating mock user object for test token');
+      // 모의 사용자 객체 생성
+      const user = {
+        id: userId,
+        email: `test_${role}@example.com`,
+        role: role
+      };
       
       // 테스트용 액세스 토큰 생성
       console.log('Generating test access token');
