@@ -8,11 +8,13 @@ const logger = require('../../../../Shared/logger');
  */
 class ConsumerService {
   /**
-   * Get list of available services
+   * Get list of available services with pagination
    * @param {Object} filters - Optional filters for services
-   * @returns {Promise<Array>} List of services
+   * @param {Number} page - Page number (1-based, defaults to 1)
+   * @param {Number} limit - Number of items per page (defaults to 20)
+   * @returns {Promise<Object>} Object containing services array and pagination metadata
    */
-  async getServices(filters = {}) {
+  async getServices(filters = {}, page = 1, limit = 20) {
     try {
       const whereClause = { isActive: true };
       
@@ -34,12 +36,29 @@ class ConsumerService {
         };
       }
       
+      // Calculate offset based on page and limit
+      const offset = (page - 1) * limit;
+      
+      // Get total count for pagination metadata
+      const count = await Service.count({ where: whereClause });
+      
+      // Get paginated services
       const services = await Service.findAll({
         where: whereClause,
-        order: [['name', 'ASC']]
+        order: [['name', 'ASC']],
+        limit: parseInt(limit),
+        offset: parseInt(offset)
       });
       
-      return services;
+      return {
+        services,
+        pagination: {
+          total: count,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          pages: Math.ceil(count / limit)
+        }
+      };
     } catch (error) {
       logger.error('Error fetching services:', error);
       throw error;
@@ -90,12 +109,14 @@ class ConsumerService {
   }
   
   /**
-   * Get reservations for a consumer
+   * Get reservations for a consumer with pagination
    * @param {Number} userId - The user ID
    * @param {Object} filters - Optional filters
-   * @returns {Promise<Array>} List of reservations
+   * @param {Number} page - Page number (1-based, defaults to 1)
+   * @param {Number} limit - Number of items per page (defaults to 20)
+   * @returns {Promise<Object>} Object containing reservations array and pagination metadata
    */
-  async getUserReservations(userId, filters = {}) {
+  async getUserReservations(userId, filters = {}, page = 1, limit = 20) {
     try {
       const whereClause = { userId };
       
@@ -119,16 +140,33 @@ class ConsumerService {
         };
       }
       
+      // Calculate offset based on page and limit
+      const offset = (page - 1) * limit;
+      
+      // Get total count for pagination metadata
+      const count = await Reservation.count({ where: whereClause });
+      
+      // Get paginated reservations
       const reservations = await Reservation.findAll({
         where: whereClause,
         include: [{
           model: Service,
           attributes: ['id', 'name', 'description', 'price', 'duration', 'category']
         }],
-        order: [['reservationDate', 'DESC']]
+        order: [['reservationDate', 'DESC']],
+        limit: parseInt(limit),
+        offset: parseInt(offset)
       });
       
-      return reservations;
+      return {
+        reservations,
+        pagination: {
+          total: count,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          pages: Math.ceil(count / limit)
+        }
+      };
     } catch (error) {
       logger.error(`Error fetching reservations for user ${userId}:`, error);
       throw error;

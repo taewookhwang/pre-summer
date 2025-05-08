@@ -6,21 +6,27 @@ const { validationResult } = require('express-validator');
  */
 const serviceController = {
   /**
-   * Get all services
+   * Get all services with pagination
    */
   getAllServices: async (req, res) => {
     try {
+      // Extract filters
       const filters = {
         category: req.query.category,
         minPrice: req.query.minPrice ? parseFloat(req.query.minPrice) : null,
         maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice) : null
       };
       
-      const services = await consumerService.getServices(filters);
+      // Extract pagination parameters
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 20;
+      
+      // Get paginated services
+      const result = await consumerService.getServices(filters, page, limit);
       
       // 응답 형식 변경: data -> services (복수형)
       // 필드명은 snake_case로 변환
-      const formattedServices = services.map(service => ({
+      const formattedServices = result.services.map(service => ({
         id: service.id,
         name: service.name,
         description: service.description,
@@ -34,7 +40,8 @@ const serviceController = {
       
       return res.status(200).json({
         success: true,
-        services: formattedServices
+        services: formattedServices,
+        pagination: result.pagination
       });
     } catch (error) {
       return res.status(500).json({
@@ -91,12 +98,36 @@ const serviceController = {
     try {
       // 서비스 카테고리 목록 - 실제로는 데이터베이스에서 가져와야 함
       const categories = [
-        { id: "cleaning", name: "청소" },
-        { id: "laundry", name: "세탁" },
-        { id: "dishes", name: "설거지" },
-        { id: "kitchen", name: "주방 정리" },
-        { id: "bathroom", name: "화장실 청소" },
-        { id: "deepcleaning", name: "특수 청소" }
+        { 
+          id: "cleaning", 
+          name: "청소", 
+          description: "일반적인 가정 청소 서비스입니다. 먼지제거, 바닥 청소 등이 포함됩니다."
+        },
+        { 
+          id: "laundry", 
+          name: "세탁", 
+          description: "의류 세탁 및 건조 서비스를 제공합니다." 
+        },
+        { 
+          id: "dishes", 
+          name: "설거지", 
+          description: "그릇 세척 및 주방 청소 서비스입니다." 
+        },
+        { 
+          id: "kitchen", 
+          name: "주방 정리", 
+          description: "주방 공간 전체 청소 및 정리 서비스입니다." 
+        },
+        { 
+          id: "bathroom", 
+          name: "화장실 청소", 
+          description: "화장실 청소 및 소독 서비스를 제공합니다." 
+        },
+        { 
+          id: "deepcleaning", 
+          name: "특수 청소", 
+          description: "얼룩 제거, 세균 소독 등 특수 청소 서비스입니다." 
+        }
       ];
       
       return res.status(200).json({

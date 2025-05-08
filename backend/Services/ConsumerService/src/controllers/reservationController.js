@@ -69,7 +69,7 @@ const reservationController = {
   },
   
   /**
-   * Get user's reservations
+   * Get user's reservations with pagination
    */
   getUserReservations: async (req, res) => {
     try {
@@ -90,10 +90,15 @@ const reservationController = {
         filters.endDate = new Date(req.query.endDate);
       }
       
-      const reservations = await consumerService.getUserReservations(userId, filters);
+      // Extract pagination parameters
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 20;
+      
+      // Get paginated reservations
+      const result = await consumerService.getUserReservations(userId, filters, page, limit);
       
       // 응답 형식 변경: 필드명 snake_case로 변환
-      const formattedReservations = reservations.map(reservation => {
+      const formattedReservations = result.reservations.map(reservation => {
         const formatted = {
           id: reservation.id,
           user_id: reservation.userId,
@@ -127,7 +132,8 @@ const reservationController = {
       
       return res.status(200).json({
         success: true,
-        reservations: formattedReservations
+        reservations: formattedReservations,
+        pagination: result.pagination
       });
     } catch (error) {
       return res.status(500).json({
