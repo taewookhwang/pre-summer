@@ -47,4 +47,32 @@ struct PaginationMeta: Decodable {
     enum CodingKeys: String, CodingKey {
         case total, page, limit, pages
     }
+    
+    // 페이지네이션 메타데이터 형식이 일치하지 않을 경우의 호환성 처리
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // 기본 필드 디코딩 시도
+        do {
+            page = try container.decode(Int.self, forKey: .page)
+            limit = try container.decode(Int.self, forKey: .limit)
+            total = try container.decode(Int.self, forKey: .total)
+            pages = try container.decode(Int.self, forKey: .pages)
+        } catch {
+            // 대체 키 이름으로 시도 (API 구현에 따라 다를 수 있음)
+            let alternativeContainer = try decoder.container(keyedBy: AlternativeCodingKeys.self)
+            page = try alternativeContainer.decodeIfPresent(Int.self, forKey: .currentPage) ?? 1
+            limit = try alternativeContainer.decodeIfPresent(Int.self, forKey: .itemsPerPage) ?? 10
+            total = try alternativeContainer.decodeIfPresent(Int.self, forKey: .totalItems) ?? 0
+            pages = try alternativeContainer.decodeIfPresent(Int.self, forKey: .totalPages) ?? 0
+        }
+    }
+    
+    // 대체 키 이름
+    private enum AlternativeCodingKeys: String, CodingKey {
+        case currentPage = "current_page"
+        case itemsPerPage = "items_per_page"
+        case totalItems = "total_items"
+        case totalPages = "total_pages"
+    }
 }
