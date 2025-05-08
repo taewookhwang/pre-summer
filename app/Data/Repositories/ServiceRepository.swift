@@ -8,8 +8,18 @@ class ServiceRepository {
     private init() {}
     
     // Helper function to convert ServicesResponse to tuple
-    private func convertToTuple(_ response: ServicesResponse) -> ([Service], PaginationMeta?) {
+    private func convertServiceResponse(_ response: ServicesResponse) -> ([Service], PaginationMeta?) {
         return (response.services, response.pagination)
+    }
+    
+    // Helper function to convert PaginatedResponse to tuple
+    private func convertPaginatedResponse<T>(_ response: PaginatedResponse<T>) -> ([T], PaginationMeta?) {
+        if let services = response.data as? [Service] {
+            return (services, response.pagination)
+        } else if let services = response.services {
+            return (services, response.pagination)
+        }
+        return ([], response.pagination)
     }
     
     // Get featured services
@@ -19,7 +29,7 @@ class ServiceRepository {
         servicesAPI.getServices(parameters: params) { result in
             switch result {
             case .success(let response):
-                completion(.success(self.convertToTuple(response)))
+                completion(.success(self.convertServiceResponse(response)))
             case .failure(let error):
                 completion(.failure(error))
             }
@@ -35,7 +45,7 @@ class ServiceRepository {
         servicesAPI.getServices(parameters: params) { result in
             switch result {
             case .success(let response):
-                completion(.success(self.convertToTuple(response)))
+                completion(.success(self.convertServiceResponse(response)))
             case .failure(let error):
                 completion(.failure(error))
             }
@@ -63,7 +73,7 @@ class ServiceRepository {
         servicesAPI.getServices(parameters: params) { result in
             switch result {
             case .success(let response):
-                completion(.success(self.convertToTuple(response)))
+                completion(.success(self.convertServiceResponse(response)))
             case .failure(let error):
                 completion(.failure(error))
             }

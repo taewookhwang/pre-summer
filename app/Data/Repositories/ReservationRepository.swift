@@ -10,8 +10,18 @@ class ReservationRepository {
     private init() {}
     
     // Helper function to convert ReservationsResponse to tuple
-    private func convertToTuple(_ response: ReservationsResponse) -> ([Reservation], PaginationMeta?) {
+    private func convertReservationResponse(_ response: ReservationsResponse) -> ([Reservation], PaginationMeta?) {
         return (response.reservations, response.pagination)
+    }
+    
+    // Helper function to convert PaginatedResponse to tuple
+    private func convertPaginatedResponse<T>(_ response: PaginatedResponse<T>) -> ([T], PaginationMeta?) {
+        if let reservations = response.data as? [Reservation] {
+            return (reservations, response.pagination)
+        } else if let reservations = response.reservations {
+            return (reservations, response.pagination)
+        }
+        return ([], response.pagination)
     }
     
     // Get recent reservations
@@ -21,7 +31,7 @@ class ReservationRepository {
         serviceHistoryAPI.getReservations(parameters: params) { result in
             switch result {
             case .success(let response):
-                completion(.success(self.convertToTuple(response)))
+                completion(.success(self.convertReservationResponse(response)))
             case .failure(let error):
                 completion(.failure(error))
             }
@@ -39,7 +49,7 @@ class ReservationRepository {
         serviceHistoryAPI.getReservations(parameters: params) { result in
             switch result {
             case .success(let response):
-                completion(.success(self.convertToTuple(response)))
+                completion(.success(self.convertReservationResponse(response)))
             case .failure(let error):
                 completion(.failure(error))
             }
