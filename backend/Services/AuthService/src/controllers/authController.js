@@ -81,11 +81,22 @@ exports.login = async (req, res) => {
 
 // 토큰 갱신
 exports.refreshToken = async (req, res) => {
-  console.log('1. RefreshToken handler called');
+  console.log('1. RefreshToken handler called with token:', req.body.refresh_token?.substring(0, 10) + '...');
   try {
     console.log('2. Calling authService.refreshUserToken');
-    // 클라이언트에서는 snake_case로 받지만 서비스에는 원래 이름으로 전달
-    const { refresh_token } = req.body;  // snake_case 필드명 사용
+    const { refresh_token } = req.body;
+    
+    if (!refresh_token) {
+      console.log('Error: No refresh token provided');
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: 'Refresh token is required',
+          details: 'No token provided'
+        }
+      });
+    }
+    
     const result = await authService.refreshUserToken(refresh_token);
     
     console.log('3. Token refresh successful, sending response');
