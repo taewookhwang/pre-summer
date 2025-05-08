@@ -7,6 +7,7 @@
 
 import Foundation
 
+// 명시적으로 Pagination 모델 가져오기
 class SearchViewModel {
     // State management enum
     enum ViewState: Equatable {
@@ -35,7 +36,7 @@ class SearchViewModel {
     private(set) var selectedCategory: ServiceCategory?
     
     // Pagination
-    private(set) var pagination: PaginationMeta?
+    private(set) var pagination: Data.Models.PaginationMeta?
     private(set) var currentPage: Int = 1
     private(set) var searchQuery: String = ""
     
@@ -68,7 +69,7 @@ class SearchViewModel {
         searchQuery = query
         state = .loading
         
-        serviceRepository.searchServices(query: query, page: currentPage) { [weak self] result in
+        serviceRepository.searchServices(query: query, page: currentPage) { [weak self] (result: Result<([Service], Data.Models.PaginationMeta?), Error>) in
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
                 
@@ -92,7 +93,7 @@ class SearchViewModel {
         state = .loading
         
         let filter = ServiceFilter(category: category.id)
-        serviceRepository.getServices(with: filter, page: currentPage) { [weak self] result in
+        serviceRepository.getServices(with: filter, page: currentPage) { [weak self] (result: Result<([Service], Data.Models.PaginationMeta?), Error>) in
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
                 
@@ -117,20 +118,20 @@ class SearchViewModel {
         
         // 기존 검색어가 있는 경우
         if !searchQuery.isEmpty {
-            serviceRepository.searchServices(query: searchQuery, page: currentPage) { [weak self] result in
+            serviceRepository.searchServices(query: searchQuery, page: currentPage) { [weak self] (result: Result<([Service], Data.Models.PaginationMeta?), Error>) in
                 self?.handleLoadMoreResult(result)
             }
         }
         // 카테고리로 검색하는 경우
         else if let category = selectedCategory {
             let filter = ServiceFilter(category: category.id)
-            serviceRepository.getServices(with: filter, page: currentPage) { [weak self] result in
+            serviceRepository.getServices(with: filter, page: currentPage) { [weak self] (result: Result<([Service], Data.Models.PaginationMeta?), Error>) in
                 self?.handleLoadMoreResult(result)
             }
         }
     }
     
-    private func handleLoadMoreResult(_ result: Result<([Service], PaginationMeta?), Error>) {
+    private func handleLoadMoreResult(_ result: Result<([Service], Data.Models.PaginationMeta?), Error>) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             

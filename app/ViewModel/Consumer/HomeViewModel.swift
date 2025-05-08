@@ -36,8 +36,8 @@ class HomeViewModel {
     private(set) var categories: [ServiceCategory] = []
     
     // Pagination
-    private(set) var servicesPagination: PaginationMeta?
-    private(set) var reservationsPagination: PaginationMeta?
+    private(set) var servicesPagination: Data.Models.PaginationMeta?
+    private(set) var reservationsPagination: Data.Models.PaginationMeta?
     private(set) var currentServicesPage: Int = 1
     private(set) var currentReservationsPage: Int = 1
     
@@ -103,7 +103,7 @@ class HomeViewModel {
     }
     
     private func loadFeaturedServices(completion: @escaping () -> Void) {
-        serviceRepository.getFeaturedServices(page: currentServicesPage) { [weak self] result in
+        serviceRepository.getFeaturedServices(page: currentServicesPage) { [weak self] (result: Result<([Service], Data.Models.PaginationMeta?), Error>) in
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
                 
@@ -129,7 +129,7 @@ class HomeViewModel {
         guard let pagination = servicesPagination, pagination.hasNextPage else { return }
         
         currentServicesPage += 1
-        serviceRepository.getFeaturedServices(page: currentServicesPage) { [weak self] result in
+        serviceRepository.getFeaturedServices(page: currentServicesPage) { [weak self] (result: Result<([Service], Data.Models.PaginationMeta?), Error>) in
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
                 
@@ -148,7 +148,7 @@ class HomeViewModel {
     }
     
     private func loadRecentReservations(completion: @escaping () -> Void) {
-        reservationRepository.getRecentReservations(page: currentReservationsPage) { [weak self] result in
+        reservationRepository.getRecentReservations(page: currentReservationsPage) { [weak self] (result: Result<([Reservation], Data.Models.PaginationMeta?), Error>) in
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
                 
@@ -174,7 +174,7 @@ class HomeViewModel {
         guard let pagination = reservationsPagination, pagination.hasNextPage else { return }
         
         currentReservationsPage += 1
-        reservationRepository.getRecentReservations(page: currentReservationsPage) { [weak self] result in
+        reservationRepository.getRecentReservations(page: currentReservationsPage) { [weak self] (result: Result<([Reservation], Data.Models.PaginationMeta?), Error>) in
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
                 
