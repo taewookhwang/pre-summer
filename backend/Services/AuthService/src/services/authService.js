@@ -146,6 +146,44 @@ exports.refreshUserToken = async (refreshToken) => {
       throw error;
     }
 
+    // 개발 환경에서 테스트 토큰 처리 - iOS 앱 테스트 용도
+    if (process.env.NODE_ENV === 'development' && refreshToken.startsWith('test_refresh_')) {
+      console.log('Development mode - Using test refresh token');
+      
+      // 테스트 토큰에서 사용자 역할과 ID 추출 (예: test_refresh_consumer_123)
+      const parts = refreshToken.split('_');
+      const role = parts.length > 2 ? parts[2] : 'consumer';
+      const userId = parts.length > 3 ? parts[3] : '1';
+      
+      console.log(`Dev test: Using role=${role}, userId=${userId}`);
+      
+      // 해당 역할을 가진 사용자 찾기 또는 생성
+      let user = await User.findOne({ where: { role } });
+      
+      if (!user) {
+        // 테스트용 사용자가 없으면 첫 번째 사용자 가져오기
+        user = await User.findByPk(1);
+        
+        if (!user) {
+          console.log('No test user found - Creating mock user object');
+          // 모의 사용자 객체 생성
+          user = {
+            id: userId,
+            email: `test_${role}@example.com`,
+            role: role
+          };
+        }
+      }
+      
+      // 테스트용 액세스 토큰 생성
+      console.log('Generating test access token');
+      const token = generateAccessToken(user);
+      
+      console.log('Test token refresh completed successfully');
+      return { token };
+    }
+
+    // 실제 JWT 토큰 처리 - 프로덕션 환경
     try {
       // 토큰 검증
       console.log('Verifying refresh token');
