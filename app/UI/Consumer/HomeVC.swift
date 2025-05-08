@@ -310,9 +310,8 @@ class HomeVC: UIViewController {
     private var isShowingAlert = false
     
     private func showErrorAlert(message: String) {
-        // 이미 알림이 표시 중이면 추가 알림을 표시하지 않음
-        guard !isShowingAlert, 
-              presentedViewController == nil || !(presentedViewController is UIAlertController) else {
+        // 이미 알림이 표시 중이거나 다른 알림 컨트롤러가 표시 중인 경우 새 알림을 표시하지 않음
+        if isShowingAlert || presentedViewController is UIAlertController {
             print("Alert already presented, skipping new alert with message: \(message)")
             return
         }
@@ -320,20 +319,23 @@ class HomeVC: UIViewController {
         isShowingAlert = true
         
         let alert = UIAlertController(
-            title: "Error",
+            title: "오류",
             message: message,
             preferredStyle: .alert
         )
         
         alert.addAction(UIAlertAction(
-            title: "OK",
+            title: "확인",
             style: .default,
             handler: { [weak self] _ in
                 self?.isShowingAlert = false
             }
         ))
         
-        present(alert, animated: true)
+        // 현재 화면에 표시된 알림이 없을 때만 새 알림 표시
+        if presentedViewController == nil {
+            present(alert, animated: true)
+        }
     }
     
     // MARK: - Actions
