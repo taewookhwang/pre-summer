@@ -71,6 +71,9 @@ class LoginVC: UIViewController {
     // MARK: - 개발용 테스트 로그인 버튼 설정
     private func setupTestLoginButtons() {
         #if DEBUG
+        // 먼저 현재 저장된 토큰 검증
+        validateTestTokens()
+        
         // 테스트 로그인 버튼 추가
         TestLoginHelper.shared.createTestLoginButtons(on: self) { [weak self] in
             guard let self = self else { return }
@@ -84,6 +87,27 @@ class LoginVC: UIViewController {
                 address: UserRepository.shared.getCurrentUser()?.address,
                 createdAt: nil
             ))
+        }
+        #endif
+    }
+    
+    // 저장된 테스트 토큰 검증하고 백엔드 인증 미들웨어 요구사항에 맞는지 확인
+    private func validateTestTokens() {
+        #if DEBUG
+        let validation = TestLoginHelper.shared.validateStoredTestTokens()
+        if !validation.isValid {
+            // 안내 메시지 표시
+            let alert = UIAlertController(
+                title: "토큰 형식 변경 안내",
+                message: "백엔드 인증 미들웨어가 업데이트되어 토큰 형식이 변경되었습니다.\n\n\(validation.message)\n\n테스트 로그인 버튼을 눌러 새 형식으로 다시 로그인하세요.",
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            
+            // 다음 runloop에서 alert을 표시하여 화면 로딩 이후에 표시되도록 함
+            DispatchQueue.main.async { [weak self] in
+                self?.present(alert, animated: true)
+            }
         }
         #endif
     }

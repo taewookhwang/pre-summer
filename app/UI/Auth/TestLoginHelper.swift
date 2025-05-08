@@ -33,15 +33,54 @@ class TestLoginHelper {
             return
         }
         
+        // 기존 토큰 삭제 (기존 토큰이 올바른 형식이 아닐 수 있음)
+        _ = KeychainManager.shared.deleteToken(forKey: "accessToken")
+        _ = KeychainManager.shared.deleteToken(forKey: "refreshToken")
+        
         // 인증 토큰 생성 및 사용자 정보 저장
         createTestSession(for: user, completion: completion)
     }
     
+    // 현재 저장된 테스트 토큰 검증 (디버깅용)
+    func validateStoredTestTokens() -> (isValid: Bool, message: String) {
+        guard let accessToken = KeychainManager.shared.getToken(forKey: "accessToken"),
+              let refreshToken = KeychainManager.shared.getToken(forKey: "refreshToken") else {
+            return (false, "토큰이 저장되어 있지 않습니다.")
+        }
+        
+        // 토큰 형식 검증
+        let isValidAccessToken = validateTestTokenFormat(accessToken)
+        let isValidRefreshToken = validateTestTokenFormat(refreshToken)
+        
+        if isValidAccessToken && isValidRefreshToken {
+            return (true, "현재 저장된 테스트 토큰 형식이 유효합니다.\nAccess: \(accessToken.prefix(15))...\nRefresh: \(refreshToken.prefix(15))...")
+        } else {
+            return (false, "저장된 토큰의 형식이 유효하지 않습니다. 다시 로그인하세요.\nAccess: \(accessToken.prefix(15))...\nRefresh: \(refreshToken.prefix(15))...")
+        }
+    }
+    
+    // 테스트 토큰 형식 검증 - "test_token_role_id" 또는 "test_refresh_role_id" 형식 확인
+    private func validateTestTokenFormat(_ token: String) -> Bool {
+        let parts = token.split(separator: "_")
+        
+        // "test_token_role_id" 또는 "test_refresh_role_id" 형식 확인
+        guard parts.count >= 4 else { return false }
+        
+        // 첫 부분은 "test"여야 함
+        guard parts[0] == "test" else { return false }
+        
+        // 마지막 부분은 숫자(ID)여야 함
+        let lastPart = parts.last!.description
+        return Int(lastPart) != nil
+    }
+    
     // 테스트 사용자 세션 생성 (토큰 및 사용자 정보 저장)
     private func createTestSession(for userData: TestUserData, completion: @escaping (Result<AppUser, Error>) -> Void) {
-        // 가상 토큰 생성
-        let token = "test_token_\(userData.role)_\(Int(Date().timeIntervalSince1970))"
-        let refreshToken = "test_refresh_token_\(userData.role)_\(Int(Date().timeIntervalSince1970))"
+        // 가상 토큰 생성 - 백엔드 authMiddleware 기대 형식에 맞춤
+        // 형식: "test_token_role_id" 또는 "test_refresh_role_id"
+        // 중요: 마지막 부분은 백엔드에서 사용자 ID로 사용하므로 실제 userData.id 값 사용
+        let token = "test_token_\(userData.role)_\(userData.id)"
+        let refreshToken = "test_refresh_\(userData.role)_\(userData.id)"
         
         // 키체인에 토큰 저장
         _ = KeychainManager.shared.saveToken(token, forKey: "accessToken")

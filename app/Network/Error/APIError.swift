@@ -11,6 +11,8 @@ enum APIError: Error {
     case notFound
     case timeout
     case serverUnavailable
+    case resourceExceedsMaximumSize(url: String?)
+    case paginationRequired(url: String?, message: String)
     
     var localizedDescription: String {
         switch self {
@@ -34,6 +36,10 @@ enum APIError: Error {
             return "요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요."
         case .serverUnavailable:
             return "서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요."
+        case .resourceExceedsMaximumSize(let url):
+            return "응답 데이터가 너무 큽니다. \(url != nil ? "URL: \(url!)" : "")"
+        case .paginationRequired(let url, let message):
+            return "\(message) \(url != nil ? "URL: \(url!)" : "")"
         }
     }
     
@@ -82,6 +88,8 @@ extension APIError {
                  nsError.code == NSURLErrorNetworkConnectionLost)
         case .timeout, .serverUnavailable:
             return true
+        case .resourceExceedsMaximumSize, .paginationRequired:
+            return false // These are response size or implementation issues, not connectivity
         default:
             return false
         }
@@ -93,6 +101,10 @@ extension APIError {
             return "인터넷 연결을 확인해주세요."
         } else if isAuthError {
             return "세션이 만료되었습니다. 다시 로그인해주세요."
+        } else if case .resourceExceedsMaximumSize = self {
+            return "데이터를 분할하여 로딩 중입니다. 잠시만 기다려주세요."
+        } else if case .paginationRequired(_, let message) = self {
+            return "페이지네이션이 필요합니다: \(message)"
         } else {
             return localizedDescription
         }
