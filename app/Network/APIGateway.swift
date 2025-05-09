@@ -314,8 +314,39 @@ class APIGateway {
                 let decodedData = try self.decoder.decode(T.self, from: responseData)
                 print("Response success: \(String(describing: type(of: decodedData)))") // 성공 로그
                 completion(.success(decodedData))
+            } catch let decodingError as DecodingError {
+                // 구체적인 디코딩 오류 처리 및 디버깅 정보 제공
+                var errorMessage = "Decoding error: "
+
+                switch decodingError {
+                case .typeMismatch(let type, let context):
+                    errorMessage += "Type mismatch for type \(type) at path \(context.codingPath.map { $0.stringValue }.joined(separator: "."))"
+                    print("\(errorMessage). Expected \(type) but found something else.")
+
+                    // 추가 디버깅 정보 (개발 환경에서만)
+                    #if DEBUG
+                    if let jsonData = String(data: responseData, encoding: .utf8) {
+                        print("JSON Data: \(jsonData)")
+                    }
+                    #endif
+
+                case .valueNotFound(let type, let context):
+                    errorMessage += "Value not found for type \(type) at path \(context.codingPath.map { $0.stringValue }.joined(separator: "."))"
+
+                case .keyNotFound(let key, let context):
+                    errorMessage += "Key '\(key.stringValue)' not found at path \(context.codingPath.map { $0.stringValue }.joined(separator: "."))"
+
+                case .dataCorrupted(let context):
+                    errorMessage += "Data corrupted at path \(context.codingPath.map { $0.stringValue }.joined(separator: "."))"
+
+                @unknown default:
+                    errorMessage += "Unknown decoding error"
+                }
+
+                print(errorMessage)
+                completion(.failure(.decodingError(decodingError)))
             } catch {
-                print("Decoding error: \(error)")
+                print("Unexpected error during decoding: \(error)")
                 completion(.failure(.decodingError(error)))
             }
         }
