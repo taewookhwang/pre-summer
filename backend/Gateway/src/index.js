@@ -111,6 +111,18 @@ app.use('/api/admin',
   )
 );
 
+// Payment Service 프록시
+app.use('/api/payments',
+  createRequestLogger('PAYMENT'),
+  createProxyMiddleware(
+    createProxyOptions(
+      process.env.PAYMENT_SERVICE_PORT || 3005,
+      { '^/api/payments': '/api' },
+      'Payment Service'
+    )
+  )
+);
+
 // iOS 앱 호환을 위한 직접 엔드포인트 라우팅
 // 서비스 관련 엔드포인트
 app.use('/api/services', 
@@ -179,4 +191,5 @@ app.listen(PORT, () => {                                                        
   console.log(`- Consumer Service: http://localhost:${process.env.CONSUMER_SERVICE_PORT || 3002}`);
   console.log(`- Technician Service: http://localhost:${process.env.TECHNICIAN_SERVICE_PORT || 3003}`);
   console.log(`- Admin Service: http://localhost:${process.env.ADMIN_SERVICE_PORT || 3004}`);
+  console.log(`- Payment Service: http://localhost:${process.env.PAYMENT_SERVICE_PORT || 3005}`);
 });
