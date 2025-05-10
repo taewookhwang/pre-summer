@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-//const bodyParser = require('body-parser'); // 별도의 body-parser 사용
 const logger = require('../../../Shared/logger');
 const { sequelize } = require('../../../Shared/database');
 require('dotenv').config({ path: '../../../Infrastructure/.env' });
@@ -26,15 +25,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// 라우트
-// 변경: /api 접두사 제거하여 Gateway 설정과 일치시킴
-app.use('/', authRoutes);
+// 라우트 - 다른 서비스와 일관성을 위해 /api 접두사 추가
+app.use('/api', authRoutes);
 
 // 기본 라우트
 app.get('/', (req, res) => {
   res.json({ 
     success: true,
-    message: 'Auth Service is running' 
+    message: 'Auth Service is running',
+    version: '1.0.0' 
   });
 });
 

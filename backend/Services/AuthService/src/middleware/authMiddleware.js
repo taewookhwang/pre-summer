@@ -1,12 +1,13 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 require('dotenv').config({ path: '../../../../Infrastructure/.env' });
+const logger = require('../../../../Shared/logger');
 
 /**
- * JWT 토큰 인증 미들웨어
+ * JWT 토큰으로 사용자 인증하는 미들웨어
  * 요청 헤더에서 Authorization 토큰을 확인하고 검증합니다.
  */
-exports.protect = async (req, res, next) => {
+exports.authenticateUser = async (req, res, next) => {
   try {
     let token;
     
@@ -19,7 +20,10 @@ exports.protect = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({
         success: false,
-        error: 'Not authorized to access this route'
+        error: {
+          message: 'Authentication required. Please login.',
+          details: 'No authentication token provided'
+        }
       });
     }
     
@@ -33,7 +37,10 @@ exports.protect = async (req, res, next) => {
       if (!user) {
         return res.status(401).json({
           success: false,
-          error: 'User not found'
+          error: {
+            message: 'Invalid token. User not found.',
+            details: 'User associated with this token no longer exists'
+          }
         });
       }
       
@@ -47,17 +54,23 @@ exports.protect = async (req, res, next) => {
       
       next();
     } catch (error) {
-      // 토큰 만료 또는 유효하지 않은 경우
+      logger.error('Token verification failed:', error);
       return res.status(401).json({
         success: false,
-        error: 'Not authorized to access this route'
+        error: {
+          message: 'Invalid or expired token. Please login again.',
+          details: error.message
+        }
       });
     }
   } catch (error) {
-    console.error('Auth middleware error:', error);
+    logger.error('Auth middleware error:', error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: {
+        message: 'Internal server error',
+        details: error.message
+      }
     });
   }
 };
@@ -66,19 +79,25 @@ exports.protect = async (req, res, next) => {
  * 특정 역할의 사용자만 접근 가능하도록 하는 미들웨어
  * @param {...string} roles - 허용된 역할 목록
  */
-exports.authorize = (...roles) => {
+exports.restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        error: 'User not authenticated'
+        error: {
+          message: 'User not authenticated',
+          details: 'Authentication required'
+        }
       });
     }
     
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        error: `User role '${req.user.role}' is not authorized to access this route`
+        error: {
+          message: 'Access denied. Insufficient permissions.',
+          details: `User role '${req.user.role}' is not authorized to access this route`
+        }
       });
     }
     

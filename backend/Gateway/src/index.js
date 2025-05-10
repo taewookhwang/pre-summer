@@ -69,7 +69,7 @@ app.use('/api/auth',
   createProxyMiddleware(
     createProxyOptions(
       process.env.AUTH_SERVICE_PORT || 3001,
-      { '^/api/auth': '' },
+      { '^/api/auth': '/api' },
       'Auth Service'
     )
   )
