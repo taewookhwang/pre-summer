@@ -11,6 +11,13 @@ const authMiddleware = require('../middleware/authMiddleware');
 router.get('/categories', serviceController.getServiceCategories);
 
 /**
+ * @route GET /api/services/categories/hierarchical
+ * @desc Get all service categories in hierarchical structure
+ * @access Public
+ */
+router.get('/categories/hierarchical', serviceController.getHierarchicalCategories);
+
+/**
  * @route GET /api/services
  * @desc Get all services
  * @access Public

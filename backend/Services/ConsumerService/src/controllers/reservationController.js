@@ -27,27 +27,53 @@ const reservationController = {
       
       const userId = req.user.id; // Assuming auth middleware sets the user
       
+      // 요청 데이터를 새 모델 형식에 맞게 매핑
       const reservationData = {
         userId,
-        serviceId: req.body.serviceId,
-        reservationDate: new Date(req.body.reservationDate),
-        address: req.body.address,
-        specialInstructions: req.body.specialInstructions || null
+        serviceId: req.body.service_id,
+        scheduledTime: new Date(req.body.scheduled_time),
+        address: {
+          street: req.body.address.street,
+          detail: req.body.address.detail,
+          postalCode: req.body.address.postal_code,
+          coordinates: req.body.address.coordinates
+        },
+        specialInstructions: req.body.special_instructions || null,
+        serviceOptions: req.body.service_options || [],
+        customFields: req.body.custom_fields || {}
       };
       
       const reservation = await consumerService.createReservation(reservationData);
       
-      // 응답 형식 변경: snake_case 사용
+      // 응답 형식 변경: snake_case 사용하고 새로운 필드 추가
+      // iOS 앱 호환을 위한 필드 추가 (date_time, reservation_date, total_price)
       const formattedReservation = {
         id: reservation.id,
         user_id: reservation.userId,
         service_id: reservation.serviceId,
         technician_id: reservation.technicianId,
-        reservation_date: reservation.reservationDate,
+        scheduled_time: reservation.scheduledTime,
+        // iOS 앱 호환용 필드들
+        date_time: reservation.scheduledTime,
+        reservation_date: reservation.scheduledTime,
         status: reservation.status,
-        address: reservation.address,
+        current_step: reservation.currentStep,
+        address: {
+          street: reservation.street,
+          detail: reservation.detail,
+          postal_code: reservation.postalCode,
+          coordinates: {
+            latitude: reservation.latitude,
+            longitude: reservation.longitude
+          }
+        },
         special_instructions: reservation.specialInstructions,
-        total_price: reservation.totalPrice,
+        service_options: reservation.serviceOptions,
+        custom_fields: reservation.customFields,
+        estimated_price: reservation.estimatedPrice,
+        // iOS 앱 호환용 필드
+        total_price: reservation.estimatedPrice,
+        estimated_duration: reservation.estimatedDuration,
         payment_status: reservation.paymentStatus,
         created_at: reservation.createdAt,
         updated_at: reservation.updatedAt
@@ -82,12 +108,12 @@ const reservationController = {
         filters.status = req.query.status;
       }
       
-      if (req.query.startDate) {
-        filters.startDate = new Date(req.query.startDate);
+      if (req.query.start_date) {
+        filters.startDate = new Date(req.query.start_date);
       }
       
-      if (req.query.endDate) {
-        filters.endDate = new Date(req.query.endDate);
+      if (req.query.end_date) {
+        filters.endDate = new Date(req.query.end_date);
       }
       
       // Extract pagination parameters
@@ -97,18 +123,30 @@ const reservationController = {
       // Get paginated reservations
       const result = await consumerService.getUserReservations(userId, filters, page, limit);
       
-      // 응답 형식 변경: 필드명 snake_case로 변환
+      // 응답 형식 변경: 필드명 snake_case로 변환하고 새 모델에 맞게 필드 추가
       const formattedReservations = result.reservations.map(reservation => {
         const formatted = {
           id: reservation.id,
           user_id: reservation.userId,
           service_id: reservation.serviceId,
           technician_id: reservation.technicianId,
-          reservation_date: reservation.reservationDate,
+          scheduled_time: reservation.scheduledTime,
           status: reservation.status,
-          address: reservation.address,
+          current_step: reservation.currentStep,
+          address: {
+            street: reservation.street,
+            detail: reservation.detail,
+            postal_code: reservation.postalCode,
+            coordinates: {
+              latitude: reservation.latitude,
+              longitude: reservation.longitude
+            }
+          },
           special_instructions: reservation.specialInstructions,
-          total_price: reservation.totalPrice,
+          service_options: reservation.serviceOptions,
+          custom_fields: reservation.customFields,
+          estimated_price: reservation.estimatedPrice,
+          estimated_duration: reservation.estimatedDuration,
           payment_status: reservation.paymentStatus,
           created_at: reservation.createdAt,
           updated_at: reservation.updatedAt
@@ -119,10 +157,12 @@ const reservationController = {
           formatted.service = {
             id: reservation.Service.id,
             name: reservation.Service.name,
+            short_description: reservation.Service.shortDescription,
             description: reservation.Service.description,
-            price: reservation.Service.price,
+            base_price: reservation.Service.basePrice,
             duration: reservation.Service.duration,
-            category: reservation.Service.category,
+            category_id: reservation.Service.categoryId,
+            subcategory_id: reservation.Service.subcategoryId,
             is_active: reservation.Service.isActive
           };
         }
@@ -156,17 +196,29 @@ const reservationController = {
       
       const reservation = await consumerService.getReservationById(reservationId, userId);
       
-      // 응답 형식 변경: snake_case 사용
+      // 응답 형식 변경: snake_case 사용하고 새 모델에 맞게 필드 추가
       const formattedReservation = {
         id: reservation.id,
         user_id: reservation.userId,
         service_id: reservation.serviceId,
         technician_id: reservation.technicianId,
-        reservation_date: reservation.reservationDate,
+        scheduled_time: reservation.scheduledTime,
         status: reservation.status,
-        address: reservation.address,
+        current_step: reservation.currentStep,
+        address: {
+          street: reservation.street,
+          detail: reservation.detail,
+          postal_code: reservation.postalCode,
+          coordinates: {
+            latitude: reservation.latitude,
+            longitude: reservation.longitude
+          }
+        },
         special_instructions: reservation.specialInstructions,
-        total_price: reservation.totalPrice,
+        service_options: reservation.serviceOptions,
+        custom_fields: reservation.customFields,
+        estimated_price: reservation.estimatedPrice,
+        estimated_duration: reservation.estimatedDuration,
         payment_status: reservation.paymentStatus,
         created_at: reservation.createdAt,
         updated_at: reservation.updatedAt
@@ -177,10 +229,12 @@ const reservationController = {
         formattedReservation.service = {
           id: reservation.Service.id,
           name: reservation.Service.name,
+          short_description: reservation.Service.shortDescription,
           description: reservation.Service.description,
-          price: reservation.Service.price,
+          base_price: reservation.Service.basePrice,
           duration: reservation.Service.duration,
-          category: reservation.Service.category,
+          category_id: reservation.Service.categoryId,
+          subcategory_id: reservation.Service.subcategoryId,
           is_active: reservation.Service.isActive
         };
       }
@@ -222,25 +276,41 @@ const reservationController = {
       
       const { reservationId } = req.params;
       const userId = req.user.id; // Assuming auth middleware sets the user
-      const { status } = req.body;
+      const { status, reason } = req.body;
+      
+      // 이유가 제공된 경우 함께 전달
+      const updateOptions = { reason };
       
       const updatedReservation = await consumerService.updateReservationStatus(
         reservationId,
         userId,
-        status
+        status,
+        updateOptions
       );
       
-      // 응답 형식 변경: snake_case 사용
+      // 응답 형식 변경: snake_case 사용하고 새 모델에 맞게 필드 추가
       const formattedReservation = {
         id: updatedReservation.id,
         user_id: updatedReservation.userId,
         service_id: updatedReservation.serviceId,
         technician_id: updatedReservation.technicianId,
-        reservation_date: updatedReservation.reservationDate,
+        scheduled_time: updatedReservation.scheduledTime,
         status: updatedReservation.status,
-        address: updatedReservation.address,
+        current_step: updatedReservation.currentStep,
+        address: {
+          street: updatedReservation.street,
+          detail: updatedReservation.detail,
+          postal_code: updatedReservation.postalCode,
+          coordinates: {
+            latitude: updatedReservation.latitude,
+            longitude: updatedReservation.longitude
+          }
+        },
         special_instructions: updatedReservation.specialInstructions,
-        total_price: updatedReservation.totalPrice,
+        service_options: updatedReservation.serviceOptions,
+        custom_fields: updatedReservation.customFields,
+        estimated_price: updatedReservation.estimatedPrice,
+        estimated_duration: updatedReservation.estimatedDuration,
         payment_status: updatedReservation.paymentStatus,
         created_at: updatedReservation.createdAt,
         updated_at: updatedReservation.updatedAt
@@ -251,10 +321,12 @@ const reservationController = {
         formattedReservation.service = {
           id: updatedReservation.Service.id,
           name: updatedReservation.Service.name,
+          short_description: updatedReservation.Service.shortDescription,
           description: updatedReservation.Service.description,
-          price: updatedReservation.Service.price,
+          base_price: updatedReservation.Service.basePrice,
           duration: updatedReservation.Service.duration,
-          category: updatedReservation.Service.category,
+          category_id: updatedReservation.Service.categoryId,
+          subcategory_id: updatedReservation.Service.subcategoryId,
           is_active: updatedReservation.Service.isActive
         };
       }
@@ -268,6 +340,35 @@ const reservationController = {
         success: false,
         error: {
           message: error.message || 'Failed to update reservation status',
+          details: error.message
+        }
+      });
+    }
+  },
+  
+  /**
+   * Get reservation status details (including real-time info)
+   */
+  getReservationStatus: async (req, res) => {
+    try {
+      const { reservationId } = req.params;
+      const userId = req.user.id; // Assuming auth middleware sets the user
+      
+      // First verify that the reservation belongs to this user
+      await consumerService.getReservationById(reservationId, userId);
+      
+      // Get reservation status details
+      const statusDetails = await consumerService.getReservationStatus(reservationId);
+      
+      return res.status(200).json({
+        success: true,
+        status: statusDetails
+      });
+    } catch (error) {
+      return res.status(error.message === 'Reservation not found' ? 404 : 500).json({
+        success: false,
+        error: {
+          message: error.message || 'Failed to fetch reservation status',
           details: error.message
         }
       });

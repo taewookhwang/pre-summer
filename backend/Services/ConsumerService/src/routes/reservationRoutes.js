@@ -54,4 +54,16 @@ router.patch(
   reservationController.updateReservationStatus
 );
 
+/**
+ * @route GET /api/reservations/:reservationId/status
+ * @desc Get reservation status details including real-time info
+ * @access Private
+ */
+router.get(
+  '/:reservationId/status',
+  authMiddleware.authenticateUser,
+  authMiddleware.restrictTo('consumer'),
+  reservationController.getReservationStatus
+);
+
 module.exports = router;

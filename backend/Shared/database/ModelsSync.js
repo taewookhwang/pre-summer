@@ -10,7 +10,8 @@ const loadModels = () => {
     '../Services/AuthService/src/models',
     '../Services/ConsumerService/src/models',
     '../Services/TechnicianService/src/models',
-    '../Services/AdminService/src/models'
+    '../Services/AdminService/src/models',
+    '../Services/MatchingService/src/models'
   ];
 
   // 모델 로드 및 관계 설정
@@ -20,7 +21,7 @@ const loadModels = () => {
       if (fs.existsSync(fullPath)) {
         logger.info(`로딩 모델 폴더: ${folderPath}`);
         fs.readdirSync(fullPath)
-          .filter(file => file.endsWith('.js') && file !== 'index.js')
+          .filter(file => file.endsWith('.js') && file !== 'index.js' && file !== 'seedData.js')
           .forEach(file => {
             try {
               require(path.join(fullPath, file));
@@ -47,9 +48,10 @@ const syncModels = async (force = false) => {
     await sequelize.sync({ force }); // force: true는 테이블을 재생성합니다
     logger.info('모델 동기화 완료');
 
-    // 초기 데이터 생성 후 데이터베이스 연결 종료
+    // 초기 데이터 생성
     await seedData();
     logger.info('초기 데이터 생성 완료');
+
     await sequelize.close();
     logger.info('데이터베이스 연결 종료');
   } catch (error) {
@@ -109,56 +111,12 @@ const seedData = async () => {
       logger.info('기술자 계정 생성 완료');
     }
 
-    // 서비스 모델 가져오기
-    const Service = sequelize.models.Service;
-    if (!Service) {
-      logger.error('Service 모델을 찾을 수 없습니다');
-      return;
-    }
-
-    // 서비스 데이터 생성
-    const services = [
-      {
-        name: '일반 청소',
-        description: '집이나 사무실의 기본적인 청소 서비스',
-        price: 50000,
-        duration: 120, // 분 단위
-        category: '일반',
-        isActive: true
-      },
-      {
-        name: '딥 클리닝',
-        description: '깊이 있는 청소로 숨겨진 먼지와 오염까지 제거',
-        price: 100000,
-        duration: 240,
-        category: '특수',
-        isActive: true
-      },
-      {
-        name: '입주 청소',
-        description: '새로운 집으로 이사 전 완벽한 상태로 준비',
-        price: 150000,
-        duration: 300,
-        category: '특수',
-        isActive: true
-      },
-      {
-        name: '사무실 청소',
-        description: '사무실 환경을 깨끗하고 위생적으로 유지',
-        price: 80000,
-        duration: 180,
-        category: '사무실',
-        isActive: true
-      }
-    ];
-
-    // 서비스 데이터 생성 (중복 체크 후)
-    for (const service of services) {
-      const serviceExists = await Service.findOne({ where: { name: service.name } });
-      if (!serviceExists) {
-        await Service.create(service);
-        logger.info(`서비스 생성 완료: ${service.name}`);
-      }
+    // 카테고리, 서브카테고리, 서비스 데이터 생성
+    try {
+      const seedCategoryData = require('../../Services/ConsumerService/src/models/seedData');
+      await seedCategoryData();
+    } catch (error) {
+      logger.error('카테고리 데이터 생성 중 오류 발생:', error);
     }
   } catch (error) {
     logger.error('초기 데이터 생성 중 오류 발생:', error);

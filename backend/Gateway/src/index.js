@@ -125,13 +125,25 @@ app.use('/api/services',
 );
 
 // 예약 관련 엔드포인트
-app.use('/api/reservations', 
+app.use('/api/reservations',
   createRequestLogger('RESERVATIONS-DIRECT'),
   createProxyMiddleware(
     createProxyOptions(
       process.env.CONSUMER_SERVICE_PORT || 3002,
       { '^/api/reservations': '/api/reservations' },
       'Reservations API'
+    )
+  )
+);
+
+// iOS 앱 호환용 service-categories 경로 추가 - 계층적 카테고리 엔드포인트로 리다이렉트
+app.use('/api/service-categories',
+  createRequestLogger('SERVICE-CATEGORIES-COMPAT'),
+  createProxyMiddleware(
+    createProxyOptions(
+      process.env.CONSUMER_SERVICE_PORT || 3002,
+      { '^/api/service-categories': '/api/services/categories/hierarchical' },
+      'Service Categories API'
     )
   )
 );
