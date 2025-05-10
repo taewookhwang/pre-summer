@@ -327,7 +327,7 @@ class JobStatusUpdateVC: UIViewController {
             dateLabel.text = "Date Unknown"
         }
         
-        addressLabel.text = job.reservation?.address ?? "Address Unavailable"
+        addressLabel.text = job.reservation?.address.street ?? "Address Unavailable"
         
         // Customer info (based on userId rather than direct customer object)
         customerInfoLabel.text = "Customer ID: \(job.reservation?.userId ?? 0)"

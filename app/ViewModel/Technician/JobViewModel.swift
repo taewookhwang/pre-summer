@@ -13,10 +13,17 @@ class JobViewModel {
     // Job list data
     private(set) var jobs: [Job] = []
     
+    // Pagination
+    private(set) var currentPage: Int = 1
+    private(set) var totalPages: Int = 1
+    private(set) var hasMorePages: Bool = false
+    private(set) var isLoadingMoreJobs: Bool = false
+    
     // UI State
     enum State {
         case idle
         case loading
+        case loadingMore
         case loaded
         case error(String)
     }
@@ -37,25 +44,66 @@ class JobViewModel {
     
     // MARK: - Methods
     
-    // Load job list
+    // Load job list (first page)
     func loadJobs(showCompleted: Bool = false) {
         state = .loading
+        currentPage = 1
         
         // For use with actual API calls
-        // jobService.getJobs(
-        //     showCompleted: showCompleted,
-        //     onSuccess: { [weak self] jobs in
-        //         self?.handleJobsLoaded(jobs)
-        //     },
-        //     onError: { [weak self] error in
-        //         self?.handleError(error)
-        //     }
-        // )
+        jobService.getJobs(
+            page: currentPage,
+            limit: 10,
+            showCompleted: showCompleted,
+            onSuccess: { [weak self] jobs, pagination in
+                guard let self = self else { return }
+                
+                self.updatePaginationInfo(pagination)
+                self.handleJobsLoaded(jobs)
+            },
+            onError: { [weak self] error in
+                self?.handleError(error)
+            }
+        )
         
-        // Test dummy data
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            self?.handleJobsLoaded(self?.generateMockJobs(showCompleted: showCompleted) ?? [])
-        }
+        // Test dummy data - commented out in favor of real API
+        // DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+        //     self?.handleJobsLoaded(self?.generateMockJobs(showCompleted: showCompleted) ?? [])
+        // }
+    }
+    
+    // Load more jobs (next page)
+    func loadMoreJobs(showCompleted: Bool = false) {
+        guard hasMorePages && !isLoadingMoreJobs else { return }
+        
+        isLoadingMoreJobs = true
+        state = .loadingMore
+        
+        let nextPage = currentPage + 1
+        
+        jobService.getJobs(
+            page: nextPage,
+            limit: 10,
+            showCompleted: showCompleted,
+            onSuccess: { [weak self] jobs, pagination in
+                guard let self = self else { return }
+                
+                self.currentPage = nextPage
+                self.updatePaginationInfo(pagination)
+                self.handleMoreJobsLoaded(jobs)
+            },
+            onError: { [weak self] error in
+                self?.isLoadingMoreJobs = false
+                self?.handleError(error)
+            }
+        )
+    }
+    
+    // Update pagination information
+    private func updatePaginationInfo(_ pagination: PaginationMeta?) {
+        guard let pagination = pagination else { return }
+        
+        self.totalPages = pagination.pages
+        self.hasMorePages = pagination.hasNextPage
     }
     
     // Update job status
@@ -132,6 +180,13 @@ class JobViewModel {
         jobsDidLoad?()
     }
     
+    private func handleMoreJobsLoaded(_ newJobs: [Job]) {
+        self.jobs.append(contentsOf: newJobs)
+        state = .loaded
+        isLoadingMoreJobs = false
+        jobsDidLoad?()
+    }
+    
     private func handleError(_ error: Error) {
         state = .error(error.localizedDescription)
         errorDidOccur?(error.localizedDescription)
@@ -167,30 +222,36 @@ class JobViewModel {
             )
             
             // Test service information
+            let price = [50000.0, 100000.0, 70000.0, 80000.0, 60000.0][index % 5]
             let service = Service(
                 id: "S\(20000 + index)",
                 name: serviceType,
                 description: "\(serviceType) service",
-                price: String([50000.0, 100000.0, 70000.0, 80000.0, 60000.0][index % 5]),
+                price: String(Int(price)),
                 duration: [2, 4, 3, 2, 1][index % 5],
-                category: "Cleaning",
+                categoryId: "cat_cleaning",
+                subcategoryId: nil,
                 isActive: true,
                 createdAt: calendar.date(byAdding: .day, value: -90, to: currentDate)!,
                 updatedAt: calendar.date(byAdding: .day, value: -5, to: currentDate)!,
                 imageURL: nil,
-                rating: Double([4.5, 4.8, 4.2, 4.7, 4.9][index % 5]),
-                reviewCount: Int([10, 25, 8, 15, 30][index % 5])
+                thumbnail: nil,
+                shortDescription: "Quick \(serviceType.lowercased())",
+                basePrice: price,
+                unit: "원",
+                rating: [4.5, 4.8, 4.2, 4.7, 4.9][index % 5],
+                reviewCount: [10, 25, 8, 15, 30][index % 5]
             )
             
             // Test reservation information
             let reservation = Reservation(
-                id: "R\(30000 + index)",
+                legacyId: "R\(30000 + index)",
                 userId: 10000 + index,
                 serviceId: "S\(20000 + index)",
                 technicianId: nil,
                 reservationDate: jobDate,
-                status: status == .cancelled ? .cancelled : .confirmed,
-                address: address,
+                status: status == .cancelled ? .cancelled : .technicianAssigned,
+                addressString: address,
                 specialInstructions: "No special instructions",
                 totalPrice: String([50000.0, 100000.0, 70000.0, 80000.0, 60000.0][index % 5]),
                 paymentStatus: "completed",

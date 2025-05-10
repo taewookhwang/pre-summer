@@ -477,7 +477,7 @@ extension ScheduleVC: UITableViewDelegate, UITableViewDataSource {
             
             // 예약 정보
             if let reservation = job.reservation {
-                configuration.text = "\(startTimeString) - \(reservation.address)"
+                configuration.text = "\(startTimeString) - \(reservation.address.street)"
                 
                 if let service = reservation.service {
                     configuration.secondaryText = "\(service.name) - \(job.status.displayName)"

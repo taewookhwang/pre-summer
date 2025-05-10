@@ -273,6 +273,13 @@ class JobListVC: UIViewController {
             tableView.isHidden = true
             emptyJobsView.isHidden = true
             
+        case .loadingMore:
+            // When loading more, we keep the table visible and show the loading indicator
+            loadingIndicator.startAnimating()
+            jobErrorView.isHidden = true
+            tableView.isHidden = false
+            emptyJobsView.isHidden = true
+            
         case .loaded:
             loadingIndicator.stopAnimating()
             jobErrorView.isHidden = true
@@ -359,6 +366,23 @@ extension JobListVC: UITableViewDelegate, UITableViewDataSource {
         
         let job = viewModel.jobs[indexPath.row]
         coordinator?.showJobDetail(job: job)
+    }
+    
+    // Pagination with infinite scrolling
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        // Check if we're near the bottom of the table view
+        let offsetY = scrollView.contentOffset.y
+        let contentHeight = scrollView.contentSize.height
+        let screenHeight = scrollView.frame.height
+        
+        // Load more data when the user scrolls near the bottom (within 200 points)
+        if offsetY > contentHeight - screenHeight - 200 {
+            // Check if there are more pages and we're not already loading
+            if viewModel.hasMorePages && !viewModel.isLoadingMoreJobs {
+                let showCompletedJobs = segmentedControl.selectedSegmentIndex == 1
+                viewModel.loadMoreJobs(showCompleted: showCompletedJobs)
+            }
+        }
     }
 }
 
@@ -562,7 +586,7 @@ class JobCell: UITableViewCell {
             dateLabel.text = "No date"
         }
         
-        addressLabel.text = job.reservation?.address ?? "No address"
+        addressLabel.text = job.reservation?.address.street ?? "No address"
         
         statusLabel.text = job.status.displayName
         statusView.backgroundColor = job.status.color

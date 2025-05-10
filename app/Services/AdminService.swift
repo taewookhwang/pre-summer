@@ -100,13 +100,13 @@ class AdminService {
         // This is a temporary placeholder and might need adjustment based on the actual Reservation model
         let dummyReservations = [
             Reservation(
-                id: "res1",
+                legacyId: "res1",
                 userId: 1,
                 serviceId: "svc1",
                 technicianId: nil,
                 reservationDate: currentDate.addingTimeInterval(3600),
                 status: ReservationStatus.pending,
-                address: "Teheran-ro 123, Gangnam-gu, Seoul",
+                addressString: "Teheran-ro 123, Gangnam-gu, Seoul",
                 specialInstructions: "Door password: 1234",
                 totalPrice: "120000",
                 paymentStatus: "pending",
@@ -114,13 +114,13 @@ class AdminService {
                 updatedAt: currentDate
             ),
             Reservation(
-                id: "res2",
+                legacyId: "res2",
                 userId: 2,
                 serviceId: "svc2",
                 technicianId: nil,
                 reservationDate: currentDate.addingTimeInterval(7200),
                 status: ReservationStatus.pending,
-                address: "Seocho-daero 456, Seocho-gu, Seoul",
+                addressString: "Seocho-daero 456, Seocho-gu, Seoul",
                 specialInstructions: "Has a pet dog",
                 totalPrice: "80000",
                 paymentStatus: "pending",
@@ -152,7 +152,7 @@ class AdminService {
         // For now, always return success
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             completion(.success(true))
-            
+
             // Log analytics event
             let event = TechnicianAssignedEvent(reservationId: reservationId, technicianId: technicianId)
             AnalyticsManager.trackBusinessEvent(event)
