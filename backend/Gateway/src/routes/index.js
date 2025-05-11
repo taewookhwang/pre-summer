@@ -11,8 +11,8 @@ router.get('/', (req, res) => {
       auth: process.env.AUTH_SERVICE_URL || 'http://localhost:3001',
       consumer: process.env.CONSUMER_SERVICE_URL || 'http://localhost:3002',
       technician: process.env.TECHNICIAN_SERVICE_URL || 'http://localhost:3003',
-      admin: process.env.ADMIN_SERVICE_URL || 'http://localhost:3004'
-    }
+      admin: process.env.ADMIN_SERVICE_URL || 'http://localhost:3004',
+    },
   });
 });
 
@@ -21,7 +21,7 @@ router.get('/health', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'API Gateway is up and running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 

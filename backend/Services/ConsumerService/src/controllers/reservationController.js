@@ -17,16 +17,16 @@ const reservationController = {
           success: false,
           error: {
             message: 'Validation failed',
-            details: errors.array().map(err => ({
+            details: errors.array().map((err) => ({
               field: err.param,
-              message: err.msg
-            }))
-          }
+              message: err.msg,
+            })),
+          },
         });
       }
-      
+
       const userId = req.user.id; // Assuming auth middleware sets the user
-      
+
       // 요청 데이터를 새 모델 형식에 맞게 매핑
       const reservationData = {
         userId,
@@ -36,15 +36,15 @@ const reservationController = {
           street: req.body.address.street,
           detail: req.body.address.detail,
           postalCode: req.body.address.postal_code,
-          coordinates: req.body.address.coordinates
+          coordinates: req.body.address.coordinates,
         },
         specialInstructions: req.body.special_instructions || null,
         serviceOptions: req.body.service_options || [],
-        customFields: req.body.custom_fields || {}
+        customFields: req.body.custom_fields || {},
       };
-      
+
       const reservation = await consumerService.createReservation(reservationData);
-      
+
       // 응답 형식 변경: snake_case 사용하고 새로운 필드 추가
       // iOS 앱 호환을 위한 필드 추가 (date_time, reservation_date, total_price)
       const formattedReservation = {
@@ -64,8 +64,8 @@ const reservationController = {
           postal_code: reservation.postalCode,
           coordinates: {
             latitude: reservation.latitude,
-            longitude: reservation.longitude
-          }
+            longitude: reservation.longitude,
+          },
         },
         special_instructions: reservation.specialInstructions,
         service_options: reservation.serviceOptions,
@@ -76,55 +76,55 @@ const reservationController = {
         estimated_duration: reservation.estimatedDuration,
         payment_status: reservation.paymentStatus,
         created_at: reservation.createdAt,
-        updated_at: reservation.updatedAt
+        updated_at: reservation.updatedAt,
       };
-      
+
       return res.status(201).json({
         success: true,
-        reservation: formattedReservation
+        reservation: formattedReservation,
       });
     } catch (error) {
       return res.status(500).json({
         success: false,
         error: {
           message: 'Failed to create reservation',
-          details: error.message
-        }
+          details: error.message,
+        },
       });
     }
   },
-  
+
   /**
    * Get user's reservations with pagination
    */
   getUserReservations: async (req, res) => {
     try {
       const userId = req.user.id; // Assuming auth middleware sets the user
-      
+
       // Parse filter parameters
       const filters = {};
-      
+
       if (req.query.status) {
         filters.status = req.query.status;
       }
-      
+
       if (req.query.start_date) {
         filters.startDate = new Date(req.query.start_date);
       }
-      
+
       if (req.query.end_date) {
         filters.endDate = new Date(req.query.end_date);
       }
-      
+
       // Extract pagination parameters
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 20;
-      
+
       // Get paginated reservations
       const result = await consumerService.getUserReservations(userId, filters, page, limit);
-      
+
       // 응답 형식 변경: 필드명 snake_case로 변환하고 새 모델에 맞게 필드 추가
-      const formattedReservations = result.reservations.map(reservation => {
+      const formattedReservations = result.reservations.map((reservation) => {
         const formatted = {
           id: reservation.id,
           user_id: reservation.userId,
@@ -139,8 +139,8 @@ const reservationController = {
             postal_code: reservation.postalCode,
             coordinates: {
               latitude: reservation.latitude,
-              longitude: reservation.longitude
-            }
+              longitude: reservation.longitude,
+            },
           },
           special_instructions: reservation.specialInstructions,
           service_options: reservation.serviceOptions,
@@ -149,9 +149,9 @@ const reservationController = {
           estimated_duration: reservation.estimatedDuration,
           payment_status: reservation.paymentStatus,
           created_at: reservation.createdAt,
-          updated_at: reservation.updatedAt
+          updated_at: reservation.updatedAt,
         };
-        
+
         // 서비스 정보가 포함된 경우 서비스 정보도 변환
         if (reservation.Service) {
           formatted.service = {
@@ -163,29 +163,29 @@ const reservationController = {
             duration: reservation.Service.duration,
             category_id: reservation.Service.categoryId,
             subcategory_id: reservation.Service.subcategoryId,
-            is_active: reservation.Service.isActive
+            is_active: reservation.Service.isActive,
           };
         }
-        
+
         return formatted;
       });
-      
+
       return res.status(200).json({
         success: true,
         reservations: formattedReservations,
-        pagination: result.pagination
+        pagination: result.pagination,
       });
     } catch (error) {
       return res.status(500).json({
         success: false,
         error: {
           message: 'Failed to fetch reservations',
-          details: error.message
-        }
+          details: error.message,
+        },
       });
     }
   },
-  
+
   /**
    * Get reservation by ID
    */
@@ -193,9 +193,9 @@ const reservationController = {
     try {
       const { reservationId } = req.params;
       const userId = req.user.id; // Assuming auth middleware sets the user
-      
+
       const reservation = await consumerService.getReservationById(reservationId, userId);
-      
+
       // 응답 형식 변경: snake_case 사용하고 새 모델에 맞게 필드 추가
       const formattedReservation = {
         id: reservation.id,
@@ -211,8 +211,8 @@ const reservationController = {
           postal_code: reservation.postalCode,
           coordinates: {
             latitude: reservation.latitude,
-            longitude: reservation.longitude
-          }
+            longitude: reservation.longitude,
+          },
         },
         special_instructions: reservation.specialInstructions,
         service_options: reservation.serviceOptions,
@@ -221,9 +221,9 @@ const reservationController = {
         estimated_duration: reservation.estimatedDuration,
         payment_status: reservation.paymentStatus,
         created_at: reservation.createdAt,
-        updated_at: reservation.updatedAt
+        updated_at: reservation.updatedAt,
       };
-      
+
       // 서비스 정보가 포함된 경우 서비스 정보도 변환
       if (reservation.Service) {
         formattedReservation.service = {
@@ -235,25 +235,25 @@ const reservationController = {
           duration: reservation.Service.duration,
           category_id: reservation.Service.categoryId,
           subcategory_id: reservation.Service.subcategoryId,
-          is_active: reservation.Service.isActive
+          is_active: reservation.Service.isActive,
         };
       }
-      
+
       return res.status(200).json({
         success: true,
-        reservation: formattedReservation
+        reservation: formattedReservation,
       });
     } catch (error) {
       return res.status(error.message === 'Reservation not found' ? 404 : 500).json({
         success: false,
         error: {
           message: error.message || 'Failed to fetch reservation',
-          details: error.message
-        }
+          details: error.message,
+        },
       });
     }
   },
-  
+
   /**
    * Update reservation status
    */
@@ -266,28 +266,28 @@ const reservationController = {
           success: false,
           error: {
             message: 'Validation failed',
-            details: errors.array().map(err => ({
+            details: errors.array().map((err) => ({
               field: err.param,
-              message: err.msg
-            }))
-          }
+              message: err.msg,
+            })),
+          },
         });
       }
-      
+
       const { reservationId } = req.params;
       const userId = req.user.id; // Assuming auth middleware sets the user
       const { status, reason } = req.body;
-      
+
       // 이유가 제공된 경우 함께 전달
       const updateOptions = { reason };
-      
+
       const updatedReservation = await consumerService.updateReservationStatus(
         reservationId,
         userId,
         status,
-        updateOptions
+        updateOptions,
       );
-      
+
       // 응답 형식 변경: snake_case 사용하고 새 모델에 맞게 필드 추가
       const formattedReservation = {
         id: updatedReservation.id,
@@ -303,8 +303,8 @@ const reservationController = {
           postal_code: updatedReservation.postalCode,
           coordinates: {
             latitude: updatedReservation.latitude,
-            longitude: updatedReservation.longitude
-          }
+            longitude: updatedReservation.longitude,
+          },
         },
         special_instructions: updatedReservation.specialInstructions,
         service_options: updatedReservation.serviceOptions,
@@ -313,9 +313,9 @@ const reservationController = {
         estimated_duration: updatedReservation.estimatedDuration,
         payment_status: updatedReservation.paymentStatus,
         created_at: updatedReservation.createdAt,
-        updated_at: updatedReservation.updatedAt
+        updated_at: updatedReservation.updatedAt,
       };
-      
+
       // 서비스 정보가 포함된 경우 서비스 정보도 변환
       if (updatedReservation.Service) {
         formattedReservation.service = {
@@ -327,25 +327,25 @@ const reservationController = {
           duration: updatedReservation.Service.duration,
           category_id: updatedReservation.Service.categoryId,
           subcategory_id: updatedReservation.Service.subcategoryId,
-          is_active: updatedReservation.Service.isActive
+          is_active: updatedReservation.Service.isActive,
         };
       }
-      
+
       return res.status(200).json({
         success: true,
-        reservation: formattedReservation
+        reservation: formattedReservation,
       });
     } catch (error) {
       return res.status(error.message === 'Reservation not found' ? 404 : 500).json({
         success: false,
         error: {
           message: error.message || 'Failed to update reservation status',
-          details: error.message
-        }
+          details: error.message,
+        },
       });
     }
   },
-  
+
   /**
    * Get reservation status details (including real-time info)
    */
@@ -353,27 +353,27 @@ const reservationController = {
     try {
       const { reservationId } = req.params;
       const userId = req.user.id; // Assuming auth middleware sets the user
-      
+
       // First verify that the reservation belongs to this user
       await consumerService.getReservationById(reservationId, userId);
-      
+
       // Get reservation status details
       const statusDetails = await consumerService.getReservationStatus(reservationId);
-      
+
       return res.status(200).json({
         success: true,
-        status: statusDetails
+        status: statusDetails,
       });
     } catch (error) {
       return res.status(error.message === 'Reservation not found' ? 404 : 500).json({
         success: false,
         error: {
           message: error.message || 'Failed to fetch reservation status',
-          details: error.message
-        }
+          details: error.message,
+        },
       });
     }
-  }
+  },
 };
 
 module.exports = reservationController;

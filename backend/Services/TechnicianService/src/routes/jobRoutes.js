@@ -13,7 +13,7 @@ router.get(
   '/',
   authMiddleware.authenticateUser,
   authMiddleware.restrictTo('technician'),
-  jobController.getTechnicianJobs
+  jobController.getTechnicianJobs,
 );
 
 /**
@@ -25,7 +25,7 @@ router.get(
   '/:jobId',
   authMiddleware.authenticateUser,
   authMiddleware.restrictTo('technician'),
-  jobController.getJobById
+  jobController.getJobById,
 );
 
 /**
@@ -38,7 +38,7 @@ router.patch(
   authMiddleware.authenticateUser,
   authMiddleware.restrictTo('technician'),
   validators.validateUpdateJobStatus,
-  jobController.updateJobStatus
+  jobController.updateJobStatus,
 );
 
 module.exports = router;

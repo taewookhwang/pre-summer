@@ -11,18 +11,18 @@ const loadModels = () => {
     '../Services/ConsumerService/src/models',
     '../Services/TechnicianService/src/models',
     '../Services/AdminService/src/models',
-    '../Services/MatchingService/src/models'
+    '../Services/MatchingService/src/models',
   ];
 
   // 모델 로드 및 관계 설정
-  servicesFolders.forEach(folderPath => {
+  servicesFolders.forEach((folderPath) => {
     try {
       const fullPath = path.join(__dirname, folderPath);
       if (fs.existsSync(fullPath)) {
         logger.info(`로딩 모델 폴더: ${folderPath}`);
         fs.readdirSync(fullPath)
-          .filter(file => file.endsWith('.js') && file !== 'index.js' && file !== 'seedData.js')
-          .forEach(file => {
+          .filter((file) => file.endsWith('.js') && file !== 'index.js' && file !== 'seedData.js')
+          .forEach((file) => {
             try {
               require(path.join(fullPath, file));
               logger.info(`로드된 모델: ${file}`);
@@ -78,7 +78,7 @@ const seedData = async () => {
         role: 'admin',
         name: '관리자',
         phone: '010-1234-5678',
-        address: '서울시 강남구'
+        address: '서울시 강남구',
       });
       logger.info('관리자 계정 생성 완료');
     }
@@ -92,7 +92,7 @@ const seedData = async () => {
         role: 'consumer',
         name: '홍길동',
         phone: '010-1111-2222',
-        address: '서울시 서초구'
+        address: '서울시 서초구',
       });
       logger.info('소비자 계정 생성 완료');
     }
@@ -106,7 +106,7 @@ const seedData = async () => {
         role: 'technician',
         name: '김청소',
         phone: '010-3333-4444',
-        address: '서울시 용산구'
+        address: '서울시 용산구',
       });
       logger.info('기술자 계정 생성 완료');
     }
@@ -132,5 +132,5 @@ if (require.main === module) {
 
 module.exports = {
   syncModels,
-  seedData
+  seedData,
 };

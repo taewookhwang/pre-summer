@@ -21,7 +21,7 @@ app.get('/', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Welcome to Payment Service API',
-    version: '1.0.0'
+    version: '1.0.0',
   });
 });
 
@@ -32,8 +32,8 @@ app.use((err, req, res, next) => {
     success: false,
     error: {
       message: err.message || 'Internal Server Error',
-      details: process.env.NODE_ENV === 'development' ? err.stack : undefined
-    }
+      details: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    },
   });
 });
 
@@ -43,8 +43,8 @@ app.use((req, res) => {
     success: false,
     error: {
       message: 'Endpoint not found',
-      details: 'The requested resource does not exist'
-    }
+      details: 'The requested resource does not exist',
+    },
   });
 });
 
@@ -57,12 +57,12 @@ const startServer = async () => {
     // 데이터베이스 연결 확인
     await sequelize.authenticate();
     logger.info('Database connection has been established successfully.');
-    
+
     // 모델 동기화
     // 주의: force 옵션은 개발 환경에서만 사용하세요.
     await sequelize.sync({ force: false });
     logger.info('Models synchronized with database.');
-    
+
     // 서버 시작
     app.listen(PORT, () => {
       logger.info(`Payment Service running on port ${PORT}`);

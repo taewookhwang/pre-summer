@@ -12,26 +12,26 @@ const jobController = {
   getTechnicianJobs: async (req, res) => {
     try {
       const technicianId = req.user.id; // Assuming auth middleware sets the user
-      
+
       // Parse filter parameters
       const filters = {};
-      
+
       if (req.query.status) {
         filters.status = req.query.status;
       }
-      
+
       if (req.query.startDate) {
         filters.startDate = req.query.startDate;
       }
-      
+
       if (req.query.endDate) {
         filters.endDate = req.query.endDate;
       }
-      
+
       const jobs = await technicianService.getTechnicianJobs(technicianId, filters);
-      
+
       // 응답 형식 변경: snake_case 사용
-      const formattedJobs = jobs.map(job => {
+      const formattedJobs = jobs.map((job) => {
         const formatted = {
           id: job.id,
           reservation_id: job.reservationId,
@@ -48,9 +48,9 @@ const jobController = {
           earnings: job.earnings,
           rating: job.rating,
           created_at: job.createdAt,
-          updated_at: job.updatedAt
+          updated_at: job.updatedAt,
         };
-        
+
         // 서비스 정보가 포함된 경우 변환
         if (job.dataValues && job.dataValues.service) {
           formatted.service = {
@@ -60,16 +60,16 @@ const jobController = {
             price: job.dataValues.service.price,
             duration: job.dataValues.service.duration,
             category: job.dataValues.service.category,
-            is_active: job.dataValues.service.isActive
+            is_active: job.dataValues.service.isActive,
           };
         }
-        
+
         return formatted;
       });
-      
+
       return res.status(200).json({
         success: true,
-        jobs: formattedJobs
+        jobs: formattedJobs,
       });
     } catch (error) {
       logger.error('Error in getTechnicianJobs controller:', error);
@@ -77,12 +77,12 @@ const jobController = {
         success: false,
         error: {
           message: 'Failed to fetch jobs',
-          details: error.message
-        }
+          details: error.message,
+        },
       });
     }
   },
-  
+
   /**
    * Get job by ID
    */
@@ -90,9 +90,9 @@ const jobController = {
     try {
       const { jobId } = req.params;
       const technicianId = req.user.id; // Assuming auth middleware sets the user
-      
+
       const job = await technicianService.getJobById(jobId, technicianId);
-      
+
       // 응답 형식 변경: snake_case 사용
       const formattedJob = {
         id: job.id,
@@ -110,9 +110,9 @@ const jobController = {
         earnings: job.earnings,
         rating: job.rating,
         created_at: job.createdAt,
-        updated_at: job.updatedAt
+        updated_at: job.updatedAt,
       };
-      
+
       // 서비스 정보가 포함된 경우 변환
       if (job.dataValues && job.dataValues.service) {
         formattedJob.service = {
@@ -122,25 +122,25 @@ const jobController = {
           price: job.dataValues.service.price,
           duration: job.dataValues.service.duration,
           category: job.dataValues.service.category,
-          is_active: job.dataValues.service.isActive
+          is_active: job.dataValues.service.isActive,
         };
       }
-      
+
       return res.status(200).json({
         success: true,
-        job: formattedJob
+        job: formattedJob,
       });
     } catch (error) {
       return res.status(error.message === 'Job not found' ? 404 : 500).json({
         success: false,
         error: {
           message: error.message || 'Failed to fetch job',
-          details: error.message
-        }
+          details: error.message,
+        },
       });
     }
   },
-  
+
   /**
    * Update job status
    */
@@ -153,29 +153,29 @@ const jobController = {
           success: false,
           error: {
             message: 'Validation failed',
-            details: errors.array().map(err => ({
+            details: errors.array().map((err) => ({
               field: err.param,
-              message: err.msg
-            }))
-          }
+              message: err.msg,
+            })),
+          },
         });
       }
-      
+
       const { jobId } = req.params;
       const technicianId = req.user.id; // Assuming auth middleware sets the user
       const { status, notes, completionPhotos } = req.body;
-      
+
       const additionalData = {};
       if (notes) additionalData.notes = notes;
       if (completionPhotos) additionalData.completionPhotos = completionPhotos;
-      
+
       const updatedJob = await technicianService.updateJobStatus(
         jobId,
         technicianId,
         status,
-        additionalData
+        additionalData,
       );
-      
+
       // 응답 형식 변경: snake_case 사용
       const formattedJob = {
         id: updatedJob.id,
@@ -193,9 +193,9 @@ const jobController = {
         earnings: updatedJob.earnings,
         rating: updatedJob.rating,
         created_at: updatedJob.createdAt,
-        updated_at: updatedJob.updatedAt
+        updated_at: updatedJob.updatedAt,
       };
-      
+
       // 서비스 정보가 포함된 경우 변환
       if (updatedJob.dataValues && updatedJob.dataValues.service) {
         formattedJob.service = {
@@ -205,29 +205,31 @@ const jobController = {
           price: updatedJob.dataValues.service.price,
           duration: updatedJob.dataValues.service.duration,
           category: updatedJob.dataValues.service.category,
-          is_active: updatedJob.dataValues.service.isActive
+          is_active: updatedJob.dataValues.service.isActive,
         };
       }
-      
+
       return res.status(200).json({
         success: true,
-        job: formattedJob
+        job: formattedJob,
       });
     } catch (error) {
-      const statusCode = 
-        error.message === 'Job not found' ? 404 :
-        error.message.includes('Invalid status transition') ? 400 : 
-        500;
-      
+      const statusCode =
+        error.message === 'Job not found'
+          ? 404
+          : error.message.includes('Invalid status transition')
+            ? 400
+            : 500;
+
       return res.status(statusCode).json({
         success: false,
         error: {
           message: error.message || 'Failed to update job status',
-          details: error.message
-        }
+          details: error.message,
+        },
       });
     }
-  }
+  },
 };
 
 module.exports = jobController;

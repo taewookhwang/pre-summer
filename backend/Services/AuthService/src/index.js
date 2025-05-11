@@ -30,10 +30,10 @@ app.use('/api', authRoutes);
 
 // 기본 라우트
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     success: true,
     message: 'Auth Service is running',
-    version: '1.0.0' 
+    version: '1.0.0',
   });
 });
 
@@ -44,8 +44,8 @@ app.use((err, req, res, next) => {
     success: false,
     error: {
       message: err.message || 'Server error',
-      details: process.env.NODE_ENV === 'development' ? err.stack : 'Internal server error'
-    }
+      details: process.env.NODE_ENV === 'development' ? err.stack : 'Internal server error',
+    },
   });
 });
 
@@ -55,8 +55,8 @@ app.use((req, res) => {
     success: false,
     error: {
       message: 'Endpoint not found',
-      details: 'The requested resource does not exist'
-    }
+      details: 'The requested resource does not exist',
+    },
   });
 });
 

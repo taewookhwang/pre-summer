@@ -14,7 +14,7 @@ const authController = {
     try {
       console.log('2. Calling authService.registerUser');
       const result = await authService.registerUser(req.body);
-      
+
       // user 객체 snake_case로 변환
       const formattedUser = {
         id: result.user.id,
@@ -23,15 +23,15 @@ const authController = {
         name: result.user.name,
         phone: result.user.phone,
         address: result.user.address,
-        created_at: result.user.created_at
+        created_at: result.user.created_at,
       };
-      
+
       console.log('3. Registration successful, sending response');
       res.status(201).json({
         success: true,
         token: result.token,
         refresh_token: result.refreshToken,
-        user: formattedUser
+        user: formattedUser,
       });
       console.log('4. Response sent');
     } catch (error) {
@@ -40,8 +40,8 @@ const authController = {
         success: false,
         error: {
           message: error.message || 'Server error',
-          details: error.message
-        }
+          details: error.message,
+        },
       });
       console.log('5. Error response sent');
     }
@@ -58,7 +58,7 @@ const authController = {
       console.log('2. Calling authService.loginUser');
       const { email, password } = req.body;
       const result = await authService.loginUser(email, password);
-      
+
       // user 객체 snake_case로 변환
       const formattedUser = {
         id: result.user.id,
@@ -67,15 +67,15 @@ const authController = {
         name: result.user.name,
         phone: result.user.phone,
         address: result.user.address,
-        created_at: result.user.created_at
+        created_at: result.user.created_at,
       };
-      
+
       console.log('3. Login successful, sending response');
       res.status(200).json({
         success: true,
         token: result.token,
         refresh_token: result.refreshToken,
-        user: formattedUser
+        user: formattedUser,
       });
       console.log('4. Response sent');
     } catch (error) {
@@ -84,8 +84,8 @@ const authController = {
         success: false,
         error: {
           message: error.message || 'Server error',
-          details: error.message
-        }
+          details: error.message,
+        },
       });
       console.log('5. Error response sent');
     }
@@ -97,28 +97,31 @@ const authController = {
    * @param {Object} res - 응답 객체
    */
   refreshToken: async (req, res) => {
-    console.log('1. RefreshToken handler called with token:', req.body.refresh_token?.substring(0, 10) + '...');
+    console.log(
+      '1. RefreshToken handler called with token:',
+      `${req.body.refresh_token?.substring(0, 10)}...`,
+    );
     try {
       console.log('2. Calling authService.refreshUserToken');
       const { refresh_token } = req.body;
-      
+
       if (!refresh_token) {
         console.log('Error: No refresh token provided');
         return res.status(400).json({
           success: false,
           error: {
             message: 'Refresh token is required',
-            details: 'No token provided'
-          }
+            details: 'No token provided',
+          },
         });
       }
-      
+
       const result = await authService.refreshUserToken(refresh_token);
-      
+
       console.log('3. Token refresh successful, sending response');
       res.status(200).json({
         success: true,
-        token: result.token
+        token: result.token,
       });
       console.log('4. Response sent');
     } catch (error) {
@@ -127,8 +130,8 @@ const authController = {
         success: false,
         error: {
           message: error.message || 'Server error',
-          details: error.message
-        }
+          details: error.message,
+        },
       });
       console.log('5. Error response sent');
     }
@@ -145,7 +148,7 @@ const authController = {
       console.log('2. Calling authService.getUserById');
       // req.user는 authMiddleware.authenticate에서 설정됨
       const user = await authService.getUserById(req.user.id);
-      
+
       // snake_case로 변환
       const formattedUser = {
         id: user.id,
@@ -154,13 +157,13 @@ const authController = {
         name: user.name,
         phone: user.phone,
         address: user.address,
-        created_at: user.created_at
+        created_at: user.created_at,
       };
-      
+
       console.log('3. User found, sending response');
       res.status(200).json({
         success: true,
-        user: formattedUser
+        user: formattedUser,
       });
       console.log('4. Response sent');
     } catch (error) {
@@ -169,12 +172,12 @@ const authController = {
         success: false,
         error: {
           message: error.message || 'Server error',
-          details: error.message
-        }
+          details: error.message,
+        },
       });
       console.log('5. Error response sent');
     }
-  }
+  },
 };
 
 module.exports = authController;

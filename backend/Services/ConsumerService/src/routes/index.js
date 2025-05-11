@@ -11,7 +11,7 @@ router.get('/health', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Consumer Service is up and running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 

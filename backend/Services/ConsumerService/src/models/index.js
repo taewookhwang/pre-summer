@@ -12,5 +12,5 @@ module.exports = {
   Service,
   ServiceOption,
   CustomField,
-  Reservation
+  Reservation,
 };

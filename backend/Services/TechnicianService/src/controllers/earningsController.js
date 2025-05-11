@@ -11,20 +11,20 @@ const earningsController = {
   getTechnicianEarnings: async (req, res) => {
     try {
       const technicianId = req.user.id; // Assuming auth middleware sets the user
-      
+
       // Parse filter parameters
       const filters = {};
-      
+
       if (req.query.startDate) {
         filters.startDate = req.query.startDate;
       }
-      
+
       if (req.query.endDate) {
         filters.endDate = req.query.endDate;
       }
-      
+
       const earnings = await technicianService.getTechnicianEarnings(technicianId, filters);
-      
+
       // 응답 형식 변경: snake_case 사용
       const formattedEarnings = {
         total_earnings: earnings.totalEarnings,
@@ -32,16 +32,16 @@ const earningsController = {
         daily_earnings: earnings.dailyEarnings,
         weekly_earnings: earnings.weeklyEarnings,
         monthly_earnings: earnings.monthlyEarnings,
-        jobs: earnings.jobs.map(job => ({
+        jobs: earnings.jobs.map((job) => ({
           id: job.id,
           end_time: job.endTime,
-          earnings: job.earnings
-        }))
+          earnings: job.earnings,
+        })),
       };
-      
+
       return res.status(200).json({
         success: true,
-        earnings: formattedEarnings
+        earnings: formattedEarnings,
       });
     } catch (error) {
       logger.error('Error in getTechnicianEarnings controller:', error);
@@ -49,11 +49,11 @@ const earningsController = {
         success: false,
         error: {
           message: 'Failed to fetch earnings',
-          details: error.message
-        }
+          details: error.message,
+        },
       });
     }
-  }
+  },
 };
 
 module.exports = earningsController;

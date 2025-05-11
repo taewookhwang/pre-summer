@@ -22,7 +22,7 @@ const seedServices = async () => {
         price: 50000,
         duration: 120, // 분 단위
         category: '일반',
-        isActive: true
+        isActive: true,
       },
       {
         name: '딥 클리닝',
@@ -30,7 +30,7 @@ const seedServices = async () => {
         price: 100000,
         duration: 240,
         category: '특수',
-        isActive: true
+        isActive: true,
       },
       {
         name: '입주 청소',
@@ -38,7 +38,7 @@ const seedServices = async () => {
         price: 150000,
         duration: 300,
         category: '특수',
-        isActive: true
+        isActive: true,
       },
       {
         name: '사무실 청소',
@@ -46,15 +46,15 @@ const seedServices = async () => {
         price: 80000,
         duration: 180,
         category: '사무실',
-        isActive: true
-      }
+        isActive: true,
+      },
     ];
 
     // 서비스 데이터 생성
     for (const serviceData of services) {
       const [service, created] = await Service.findOrCreate({
         where: { name: serviceData.name },
-        defaults: serviceData
+        defaults: serviceData,
       });
 
       if (created) {

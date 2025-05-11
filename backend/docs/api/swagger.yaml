@@ -1,0 +1,1791 @@
+openapi: 3.0.0
+info:
+  title: Home Cleaning App API
+  description: |
+    API documentation for Home Cleaning App
+
+    ## General API Conventions
+
+    1. All response bodies include a `success` boolean field indicating the status of the operation
+    2. All property names follow snake_case naming convention
+    3. All date/time fields use ISO 8601 format (YYYY-MM-DDThh:mm:ssZ)
+    4. Paginated responses include pagination metadata
+    5. Error responses include code and message fields
+
+    ## API Versioning
+
+    1. Compatible changes are made within the same version
+    2. Breaking changes require a new API version (/v1, /v2)
+    3. Versions support a transition period where both are available
+  version: 1.1.0
+servers:
+  - url: https://api.homecleaningapp.com/v1
+    description: Production server
+  - url: https://dev-api.homecleaningapp.com/v1
+    description: Development server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    StandardResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the operation was successful
+          example: true
+      required:
+        - success
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: string
+        message:
+          type: string
+        suggestion:
+          type: string
+          description: Optional suggestion for resolving the error
+      required:
+        - success
+        - code
+        - message
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+      required:
+        - email
+        - password
+    AuthResponse:
+      allOf:
+        - $ref: '#/components/schemas/StandardResponse'
+        - type: object
+          properties:
+            access_token:
+              type: string
+            refresh_token:
+              type: string
+            user:
+              $ref: '#/components/schemas/User'
+          required:
+            - access_token
+            - refresh_token
+            - user
+    RefreshTokenRequest:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+      required:
+        - refresh_token
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+          enum: [admin, consumer, technician]
+        profile_image:
+          type: string
+          format: uri
+        rating:
+          type: number
+          format: float
+          description: Average rating (for technicians)
+          minimum: 1
+          maximum: 5
+        available_services:
+          type: array
+          items:
+            type: string
+          description: List of service IDs offered (for technicians)
+      required:
+        - id
+        - email
+        - name
+        - role
+
+    # Category and Service models
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 'cleaning'
+        name:
+          type: string
+          example: '청소'
+        icon_url:
+          type: string
+          format: uri
+          example: 'https://example.com/icons/cleaning.png'
+        subcategories:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubCategory'
+      required:
+        - id
+        - name
+
+    SubCategory:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 'special_cleaning'
+        name:
+          type: string
+          example: '특수 청소'
+        parent_id:
+          type: string
+          example: 'cleaning'
+        services:
+          type: array
+          items:
+            type: string
+          example: ['ac_cleaning', 'mold_removal']
+      required:
+        - id
+        - name
+        - parent_id
+
+    Service:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category_id:
+          type: string
+        subcategory_id:
+          type: string
+        short_description:
+          type: string
+        base_price:
+          type: number
+        unit:
+          type: string
+          example: '대당'
+        duration:
+          type: integer
+          description: Duration in minutes
+        thumbnail:
+          type: string
+          format: uri
+      required:
+        - id
+        - name
+        - category_id
+        - base_price
+        - duration
+
+    ServiceDetail:
+      allOf:
+        - $ref: '#/components/schemas/Service'
+        - type: object
+          properties:
+            description:
+              type: string
+              example: '에어컨 내부의 곰팡이와 먼지를 깨끗하게 제거하는 전문 서비스입니다.'
+            images:
+              type: array
+              items:
+                type: string
+                format: uri
+              example: ['url1', 'url2', 'url3']
+            options:
+              type: array
+              items:
+                $ref: '#/components/schemas/ServiceOption'
+            required_fields:
+              type: array
+              items:
+                type: string
+              example: ['ac_count', 'ac_type']
+            custom_fields:
+              type: array
+              items:
+                $ref: '#/components/schemas/CustomField'
+            ratings:
+              type: object
+              properties:
+                average:
+                  type: number
+                  example: 4.8
+                count:
+                  type: integer
+                  example: 254
+            reviews:
+              type: array
+              items:
+                $ref: '#/components/schemas/Review'
+          required:
+            - description
+
+    CustomField:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 'ac_count'
+        name:
+          type: string
+          example: '에어컨 대수'
+        type:
+          type: string
+          enum: [text, number, boolean, selection]
+          example: 'number'
+        required:
+          type: boolean
+          example: true
+        options:
+          type: array
+          items:
+            type: string
+          example: ['1', '2', '3', '4', '5+']
+          description: 'selection 타입인 경우 선택 옵션'
+      required:
+        - id
+        - name
+        - type
+        - required
+
+    ServiceOption:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 'filter_replacement'
+        name:
+          type: string
+          example: '필터 교체'
+        price:
+          type: number
+          example: 15000
+        description:
+          type: string
+          example: '에어컨 필터를 새것으로 교체합니다.'
+      required:
+        - id
+        - name
+        - price
+
+    ServiceRequest:
+      type: object
+      properties:
+        service_id:
+          type: string
+        scheduled_time:
+          type: string
+          format: date-time
+        address:
+          $ref: '#/components/schemas/Address'
+        special_instructions:
+          type: string
+        service_options:
+          type: array
+          items:
+            type: object
+            properties:
+              option_id:
+                type: string
+              quantity:
+                type: integer
+                default: 1
+        custom_fields:
+          type: object
+          additionalProperties: true
+          example:
+            ac_count: 2
+            ac_type: '벽걸이형'
+            parking_available: true
+      required:
+        - service_id
+        - scheduled_time
+        - address
+
+    Address:
+      type: object
+      properties:
+        street:
+          type: string
+          example: '서울시 강남구 테헤란로 123'
+        detail:
+          type: string
+          example: '456동 789호'
+        postal_code:
+          type: string
+          example: '06134'
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+      required:
+        - street
+
+    Coordinates:
+      type: object
+      properties:
+        latitude:
+          type: number
+          example: 37.5326
+        longitude:
+          type: number
+          example: 127.0246
+      required:
+        - latitude
+        - longitude
+
+    Reservation:
+      type: object
+      properties:
+        id:
+          type: string
+        service:
+          $ref: '#/components/schemas/Service'
+        consumer:
+          $ref: '#/components/schemas/User'
+        technician:
+          $ref: '#/components/schemas/User'
+        status:
+          type: string
+          enum:
+            [pending, searching_technician, technician_assigned, in_progress, completed, cancelled]
+        scheduled_time:
+          type: string
+          format: date-time
+        address:
+          $ref: '#/components/schemas/Address'
+        special_instructions:
+          type: string
+        service_options:
+          type: array
+          items:
+            type: object
+            properties:
+              option:
+                $ref: '#/components/schemas/ServiceOption'
+              quantity:
+                type: integer
+        custom_fields:
+          type: object
+          additionalProperties: true
+        estimated_price:
+          type: number
+          example: 115000
+        estimated_duration:
+          type: integer
+          example: 120
+      required:
+        - id
+        - service
+        - consumer
+        - status
+        - scheduled_time
+        - address
+
+    ReservationUpdateRequest:
+      type: object
+      properties:
+        scheduled_time:
+          type: string
+          format: date-time
+          example: '2025-06-01T16:00:00Z'
+        address:
+          $ref: '#/components/schemas/Address'
+        special_instructions:
+          type: string
+        service_options:
+          type: array
+          items:
+            type: object
+            properties:
+              option_id:
+                type: string
+              quantity:
+                type: integer
+        custom_fields:
+          type: object
+          additionalProperties: true
+
+    ReservationStatus:
+      type: object
+      properties:
+        reservation_id:
+          type: string
+        status:
+          type: string
+          enum:
+            [pending, searching_technician, technician_assigned, in_progress, completed, cancelled]
+        technician:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            photo_url:
+              type: string
+            rating:
+              type: number
+          nullable: true
+        eta:
+          type: string
+          format: date-time
+          nullable: true
+        current_step:
+          type: string
+          enum:
+            [
+              pending_payment,
+              finding_technician,
+              technician_assigned,
+              technician_on_way,
+              service_in_progress,
+              service_completed,
+            ]
+        next_steps:
+          type: array
+          items:
+            type: string
+      required:
+        - reservation_id
+        - status
+        - current_step
+
+    # Matching related schemas
+    MatchingResponse:
+      type: object
+      properties:
+        matching_id:
+          type: string
+        reservation_id:
+          type: string
+        status:
+          type: string
+          enum: [initiated, in_progress, technician_found, failed]
+          example: 'initiated'
+        estimated_wait_time:
+          type: integer
+          description: '예상 대기 시간(초)'
+          example: 300
+        attempts:
+          type: integer
+          description: '매칭 시도 횟수'
+          example: 2
+        matching_end_time:
+          type: string
+          format: date-time
+          nullable: true
+          description: '매칭 종료 예상 시간'
+      required:
+        - matching_id
+        - reservation_id
+        - status
+
+    MatchingAlgorithmConfig:
+      type: object
+      properties:
+        weights:
+          type: object
+          properties:
+            distance_weight:
+              type: number
+              example: 0.5
+              description: '거리 가중치 (0.0 ~ 1.0)'
+            rating_weight:
+              type: number
+              example: 0.3
+              description: '평점 가중치 (0.0 ~ 1.0)'
+            experience_weight:
+              type: number
+              example: 0.2
+              description: '경험 가중치 (0.0 ~ 1.0)'
+          required:
+            - distance_weight
+            - rating_weight
+            - experience_weight
+        parameters:
+          type: object
+          properties:
+            max_distance_km:
+              type: number
+              example: 10
+              description: '최대 매칭 거리(km)'
+            max_attempts:
+              type: integer
+              example: 5
+              description: '최대 매칭 시도 횟수'
+            attempt_timeout_seconds:
+              type: integer
+              example: 30
+              description: '매칭 시도당 타임아웃 시간(초)'
+            matching_timeout_seconds:
+              type: integer
+              example: 300
+              description: '전체 매칭 프로세스 타임아웃 시간(초)'
+          required:
+            - max_distance_km
+            - max_attempts
+            - matching_timeout_seconds
+      required:
+        - weights
+        - parameters
+
+    # Technician status
+    TechnicianStatus:
+      type: object
+      properties:
+        id:
+          type: string
+        is_active:
+          type: boolean
+          example: true
+          description: '현재 활성화 상태 여부'
+        available_services:
+          type: array
+          items:
+            type: string
+          example: ['ac_cleaning', 'mold_removal']
+          description: '제공 가능한 서비스 ID 목록'
+        location:
+          $ref: '#/components/schemas/Coordinates'
+          description: '현재 위치'
+        last_updated:
+          type: string
+          format: date-time
+          description: '마지막 상태 업데이트 시간'
+      required:
+        - id
+        - is_active
+        - last_updated
+
+    TechnicianStatusUpdate:
+      type: object
+      properties:
+        is_active:
+          type: boolean
+          example: true
+          description: '활성화 상태 설정'
+        available_services:
+          type: array
+          items:
+            type: string
+          example: ['ac_cleaning', 'mold_removal']
+          description: '제공 가능한 서비스 ID 목록'
+        location:
+          $ref: '#/components/schemas/Coordinates'
+          description: '현재 위치'
+      required:
+        - is_active
+
+    # Location related schemas
+    LocationUpdate:
+      type: object
+      properties:
+        user_id:
+          type: string
+        user_type:
+          type: string
+          enum: [customer, technician]
+        reservation_id:
+          type: string
+          nullable: true
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+        heading:
+          type: number
+          nullable: true
+          example: 90
+        speed:
+          type: number
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - user_id
+        - user_type
+        - coordinates
+        - timestamp
+
+    ReservationLocation:
+      type: object
+      properties:
+        reservation_id:
+          type: string
+        service_location:
+          $ref: '#/components/schemas/Coordinates'
+        technician_location:
+          allOf:
+            - $ref: '#/components/schemas/Coordinates'
+            - type: object
+              properties:
+                heading:
+                  type: number
+                  example: 90
+                last_updated:
+                  type: string
+                  format: date-time
+          nullable: true
+        eta:
+          type: integer
+          description: '도착 예상 시간(초)'
+          nullable: true
+      required:
+        - reservation_id
+        - service_location
+
+    Job:
+      type: object
+      properties:
+        id:
+          type: string
+        reservation:
+          $ref: '#/components/schemas/Reservation'
+        status:
+          type: string
+          enum: [assigned, en_route, arrived, in_progress, completed, cancelled]
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        photos:
+          type: array
+          items:
+            type: string
+            format: uri
+        notes:
+          type: string
+      required:
+        - id
+        - reservation
+        - status
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        limit:
+          type: integer
+          minimum: 1
+        total_items:
+          type: integer
+        total_pages:
+          type: integer
+      required:
+        - page
+        - limit
+        - total_items
+        - total_pages
+
+    PaginatedResponse:
+      allOf:
+        - $ref: '#/components/schemas/StandardResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                type: object
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+          required:
+            - data
+            - pagination
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+        user_name:
+          type: string
+          example: '홍길동'
+        rating:
+          type: number
+          example: 5.0
+          minimum: 1
+          maximum: 5
+        content:
+          type: string
+          example: '아주 꼼꼼하게 청소해주셨어요!'
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - rating
+        - created_at
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+        job:
+          $ref: '#/components/schemas/Job'
+        amount:
+          type: number
+        status:
+          type: string
+          enum: [pending, completed, refunded, failed]
+        method:
+          type: string
+        transaction_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - job
+        - amount
+        - status
+        - method
+        - created_at
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Authentication paths
+  /auth/login:
+    post:
+      summary: User login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/refresh:
+    post:
+      summary: Refresh access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/StandardResponse'
+                  - type: object
+                    properties:
+                      access_token:
+                        type: string
+                    required:
+                      - access_token
+        '401':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Service category paths
+  /service-categories:
+    get:
+      summary: 서비스 카테고리 목록 조회
+      description: 계층적 구조의 서비스 카테고리 목록을 반환합니다.
+      tags:
+        - Service
+      responses:
+        '200':
+          description: 성공적으로 카테고리 목록을 반환
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      categories:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Category'
+                required:
+                  - success
+                  - data
+
+  /service-categories/{categoryId}/services:
+    get:
+      summary: 카테고리별 서비스 목록 조회
+      description: 특정 카테고리에 속한 서비스 목록을 반환합니다.
+      tags:
+        - Service
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          description: 카테고리 ID
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Items per page
+      responses:
+        '200':
+          description: 성공적으로 서비스 목록을 반환
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Service'
+
+  # Services paths
+  /services:
+    get:
+      summary: Get all services
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Items per page
+        - in: query
+          name: category
+          schema:
+            type: string
+          description: Filter by category ID
+        - in: query
+          name: subcategory
+          schema:
+            type: string
+          description: Filter by subcategory ID
+      responses:
+        '200':
+          description: List of services
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Service'
+
+  /services/{serviceId}:
+    get:
+      summary: 서비스 상세 정보 조회
+      description: 특정 서비스의 상세 정보를 반환합니다.
+      tags:
+        - Service
+      parameters:
+        - name: serviceId
+          in: path
+          required: true
+          description: 서비스 ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 성공적으로 서비스 상세 정보를 반환
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/ServiceDetail'
+                required:
+                  - success
+                  - data
+
+  # Reservation paths
+  /reservations:
+    post:
+      summary: 새 예약 생성
+      description: 서비스 예약을 생성합니다.
+      tags:
+        - Reservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceRequest'
+      responses:
+        '201':
+          description: 예약 생성 성공
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/StandardResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Reservation'
+                    required:
+                      - data
+        '400':
+          description: 요청 데이터 오류
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /consumers/reservations:
+    get:
+      summary: Get consumer's reservations
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Items per page
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum:
+              [
+                pending,
+                searching_technician,
+                technician_assigned,
+                in_progress,
+                completed,
+                cancelled,
+              ]
+          description: Filter by reservation status
+      responses:
+        '200':
+          description: List of reservations
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Reservation'
+
+  /reservations/{reservationId}:
+    get:
+      summary: 예약 상세 정보 조회
+      description: 특정 예약의 상세 정보를 조회합니다.
+      tags:
+        - Reservation
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          description: 예약 ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 성공적으로 예약 정보를 반환
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Reservation'
+                required:
+                  - success
+                  - data
+
+    put:
+      summary: 예약 정보 수정
+      description: 생성된 예약의 정보를 수정합니다. (시간, 옵션 등)
+      tags:
+        - Reservation
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          description: 예약 ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationUpdateRequest'
+      responses:
+        '200':
+          description: 예약 수정 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Reservation'
+                required:
+                  - success
+                  - data
+
+  /reservations/{reservationId}/cancel:
+    post:
+      summary: 예약 취소
+      description: 예약을 취소합니다.
+      tags:
+        - Reservation
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          description: 예약 ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: 취소 사유
+      responses:
+        '200':
+          description: 예약 취소 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      cancellation_fee:
+                        type: number
+                        description: 취소 수수료 (있는 경우)
+                        nullable: true
+                required:
+                  - success
+                  - data
+
+  /reservations/{reservationId}/status:
+    get:
+      summary: 예약 상태 조회
+      description: 특정 예약의 현재 상태를 조회합니다.
+      tags:
+        - Reservation
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          description: 예약 ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 성공적으로 예약 상태를 반환
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/ReservationStatus'
+                required:
+                  - success
+                  - data
+
+  # Matching paths
+  /matching/{reservationId}:
+    post:
+      summary: 기술자 매칭 시작
+      description: 예약에 대한 기술자 매칭 프로세스를 시작합니다.
+      tags:
+        - Matching
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          description: 예약 ID
+          schema:
+            type: string
+      responses:
+        '202':
+          description: 매칭 프로세스 시작됨
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/MatchingResponse'
+                required:
+                  - success
+                  - data
+
+    get:
+      summary: 매칭 상태 조회
+      description: 현재 진행 중인 매칭 상태를 조회합니다.
+      tags:
+        - Matching
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          description: 예약 ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 현재 매칭 상태 반환
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/MatchingResponse'
+                required:
+                  - success
+                  - data
+
+  # Technician paths
+  /technicians/{technicianId}/jobs/{jobId}/response:
+    post:
+      summary: 기술자 작업 수락/거절
+      description: 기술자가 매칭된 작업을 수락하거나 거절합니다.
+      tags:
+        - Matching
+      parameters:
+        - name: technicianId
+          in: path
+          required: true
+          description: 기술자 ID
+          schema:
+            type: string
+        - name: jobId
+          in: path
+          required: true
+          description: 작업 ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accepted:
+                  type: boolean
+                  description: 작업 수락 여부
+                reason:
+                  type: string
+                  description: 거절 시 사유 (선택사항)
+              required:
+                - accepted
+      responses:
+        '200':
+          description: 응답 처리 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                required:
+                  - success
+
+  /technicians/{technicianId}/status:
+    get:
+      summary: 기술자 상태 조회
+      description: 기술자의 현재 활성화 상태와 가능한 서비스 목록을 조회합니다.
+      tags:
+        - Technician
+      parameters:
+        - name: technicianId
+          in: path
+          required: true
+          description: 기술자 ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 기술자 상태 조회 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/TechnicianStatus'
+                required:
+                  - success
+                  - data
+
+    put:
+      summary: 기술자 상태 업데이트
+      description: 기술자의 활성화 상태와 가능한 서비스 목록을 업데이트합니다.
+      tags:
+        - Technician
+      parameters:
+        - name: technicianId
+          in: path
+          required: true
+          description: 기술자 ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TechnicianStatusUpdate'
+      responses:
+        '200':
+          description: 기술자 상태 업데이트 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/TechnicianStatus'
+                required:
+                  - success
+                  - data
+
+  /technicians/jobs:
+    get:
+      summary: Get technician's jobs
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Items per page
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [assigned, en_route, arrived, in_progress, completed, cancelled]
+          description: Filter by job status
+      responses:
+        '200':
+          description: List of jobs
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Job'
+
+  /technicians/jobs/{id}/status:
+    put:
+      summary: Update job status
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Job ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [en_route, arrived, in_progress, completed]
+              required:
+                - status
+      responses:
+        '200':
+          description: Job status updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/StandardResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Job'
+                    required:
+                      - data
+        '400':
+          description: Invalid status transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /technicians/jobs/{id}/photos:
+    post:
+      summary: Upload job photos
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Job ID
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photos:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        '200':
+          description: Photos uploaded
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/StandardResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Job'
+                    required:
+                      - data
+
+  # Location paths
+  /location:
+    post:
+      summary: 위치 정보 업데이트
+      description: 기술자 또는 소비자의 현재 위치 정보를 업데이트합니다.
+      tags:
+        - Location
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationUpdate'
+      responses:
+        '200':
+          description: 위치 업데이트 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                required:
+                  - success
+
+  /reservations/{reservationId}/location:
+    get:
+      summary: 예약 관련 위치 정보 조회
+      description: 특정 예약과 관련된 위치 정보(기술자, 서비스 위치)를 조회합니다.
+      tags:
+        - Location
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          description: 예약 ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 위치 정보 조회 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/ReservationLocation'
+                required:
+                  - success
+                  - data
+
+  # Admin paths
+  /admin/matching/algorithm:
+    get:
+      summary: 매칭 알고리즘 설정 조회
+      description: 현재 적용 중인 매칭 알고리즘의 파라미터 및 설정을 조회합니다.
+      tags:
+        - Admin
+      responses:
+        '200':
+          description: 매칭 알고리즘 설정 조회 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/MatchingAlgorithmConfig'
+                required:
+                  - success
+                  - data
+
+    put:
+      summary: 매칭 알고리즘 설정 업데이트
+      description: 매칭 알고리즘의 가중치 및 설정 파라미터를 수정합니다.
+      tags:
+        - Admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchingAlgorithmConfig'
+      responses:
+        '200':
+          description: 매칭 알고리즘 설정 업데이트 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/MatchingAlgorithmConfig'
+                required:
+                  - success
+                  - data
+
+  # Review paths
+  /consumers/reviews:
+    post:
+      summary: Create a review for completed job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                job_id:
+                  type: string
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                comment:
+                  type: string
+              required:
+                - job_id
+                - rating
+      responses:
+        '201':
+          description: Review created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/StandardResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Review'
+                    required:
+                      - data
+
+  # Payment paths
+  /payments/jobs/{id}:
+    post:
+      summary: Process payment for a job
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Job ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                method:
+                  type: string
+                  enum: [credit_card, bank_transfer]
+                payment_details:
+                  type: object
+              required:
+                - method
+      responses:
+        '200':
+          description: Payment processed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/StandardResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Payment'
+                    required:
+                      - data
+        '400':
+          description: Payment failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+# WebSocket API 정의
+x-websocket-endpoints:
+  /ws/reservations/{reservationId}:
+    description: |
+      예약 상태 및 기술자 위치에 대한 실시간 업데이트를 위한 WebSocket 연결
+
+      **이벤트 타입:**
+
+      1. `matching_status_changed`: 매칭 상태 변경 시 발생
+      2. `location_update`: 기술자 위치 업데이트 시 발생
+      3. `reservation_status_changed`: 예약 상태 변경 시 발생
+      4. `chat_message`: 메시지 수신 시 발생
+
+      **예시 이벤트:**
+
+      ```json
+      {
+        "event": "matching_status_changed",
+        "data": {
+          "status": "technician_found",
+          "technician": {
+            "id": "tech123",
+            "name": "김기술",
+            "rating": 4.9,
+            "photo_url": "https://..."
+          }
+        }
+      }
+
+      {
+        "event": "location_update",
+        "data": {
+          "technician_id": "tech123",
+          "lat": 37.5326,
+          "lng": 127.0246,
+          "heading": 90,
+          "timestamp": "2025-05-09T15:30:45Z"
+        }
+      }
+      ```
+
+      **주의사항:**
+
+      - 모든 WebSocket 연결은 사용자 인증이 필요합니다.
+      - 연결 시 Authorization 헤더나 쿼리 파라미터로 토큰을 전달해야 합니다.
+      - 위치 데이터는 AES-256 암호화를 사용하여 전송됩니다.
+      - 위치 업데이트는 거리에 따라 다음과 같이 최적화됩니다:
+        - 거리 < 1km: 3초마다 업데이트
+        - 거리 1-5km: 10초마다 업데이트
+        - 거리 > 5km: 30초마다 업데이트
+      - 헤딩 및 속도 정보는 필요한 경우에만 포함됩니다.
+
+# 서비스 간 통신 프로토콜 정의
+x-interservice-communication:
+  description: |
+    서비스 간 통신에는 다음 프로토콜을 사용합니다:
+
+    1. 동기식 통신: REST API를 통한 직접 호출
+    2. 비동기식 통신: 메시지 큐(Kafka)를 통한 이벤트 기반 통신
+
+    주요 서비스 간 통신 흐름:
+
+    - ConsumerService → MatchingService: 새 예약 생성 시 매칭 요청
+    - MatchingService → NotificationService: 매칭 결과 알림
+    - LocationService → MatchingService: 위치 기반 매칭을 위한 위치 데이터 제공
+
+    메시지 큐 토픽:
+
+    - reservation.created
+    - reservation.updated
+    - reservation.cancelled
+    - matching.started
+    - matching.completed
+    - location.updated
+
+    데이터 암호화:
+
+    - 모든 위치 데이터는 전송 및 저장 시 AES-256 암호화 적용
+    - 개인 식별 정보는 항상 암호화하여 처리
+    - WebSocket 연결은 TLS 1.3 사용
+
+    이벤트 스키마 관리:
+
+    - Protocol Buffers 기반 스키마 정의
+    - 버전 관리를 통한 하위 호환성 보장
+    - CDC(Change Data Capture) 패턴을 통한 DB 변경사항 추적 및 이벤트 생성
+
+# 위치 데이터 최적화 전략
+x-location-optimization:
+  description: |
+    위치 데이터 전송 및 처리 최적화 전략:
+
+    1. 거리 기반 업데이트 주기 조절:
+       - 거리 < 1km: 3초마다 업데이트
+       - 거리 1-5km: 10초마다 업데이트
+       - 거리 > 5km: 30초마다 업데이트
+
+    2. 데이터 최적화:
+       - 좌표 정밀도 조정 (소수점 5자리로 제한)
+       - 불필요한 속성 생략 (정지 상태에서 속도, 헤딩 정보 생략)
+       - 배치 처리를 통한 네트워크 요청 감소
+
+    3. 지리적 인덱싱:
+       - MongoDB 지오인덱싱 활용
+       - 근접 거리 필터링에 GeoHash 활용
+       - 위치 데이터 전용 서버 클러스터 구성
+
+    4. 암호화 및 보안:
+       - 위치 데이터 AES-256 암호화
+       - 위치 정보 접근 권한 제한
+       - 위치 데이터 보관 기간 제한 (1주일)

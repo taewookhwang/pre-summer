@@ -12,7 +12,7 @@ router.get(
   '/stats',
   authMiddleware.authenticateUser,
   authMiddleware.ensureAdmin,
-  dashboardController.getDashboardStats
+  dashboardController.getDashboardStats,
 );
 
 /**
@@ -24,7 +24,7 @@ router.get(
   '/services',
   authMiddleware.authenticateUser,
   authMiddleware.ensureAdmin,
-  dashboardController.getServicePerformance
+  dashboardController.getServicePerformance,
 );
 
 module.exports = router;

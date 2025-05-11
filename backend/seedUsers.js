@@ -33,7 +33,7 @@ const seedUsers = async () => {
         name: '관리자',
         phone: '010-1234-5678',
         address: '서울시 강남구',
-        is_active: true
+        is_active: true,
       },
       {
         email: 'consumer@example.com',
@@ -42,7 +42,7 @@ const seedUsers = async () => {
         name: '홍길동',
         phone: '010-1111-2222',
         address: '서울시 서초구',
-        is_active: true
+        is_active: true,
       },
       {
         email: 'technician@example.com',
@@ -51,15 +51,15 @@ const seedUsers = async () => {
         name: '김청소',
         phone: '010-3333-4444',
         address: '서울시 용산구',
-        is_active: true
-      }
+        is_active: true,
+      },
     ];
 
     // 유저 데이터 생성
     for (const userData of users) {
       const [user, created] = await User.findOrCreate({
         where: { email: userData.email },
-        defaults: userData
+        defaults: userData,
       });
 
       if (created) {

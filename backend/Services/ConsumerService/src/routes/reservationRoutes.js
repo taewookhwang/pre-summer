@@ -14,7 +14,7 @@ router.post(
   authMiddleware.authenticateUser,
   authMiddleware.restrictTo('consumer'),
   validators.validateCreateReservation,
-  reservationController.createReservation
+  reservationController.createReservation,
 );
 
 /**
@@ -26,7 +26,7 @@ router.get(
   '/',
   authMiddleware.authenticateUser,
   authMiddleware.restrictTo('consumer'),
-  reservationController.getUserReservations
+  reservationController.getUserReservations,
 );
 
 /**
@@ -38,7 +38,7 @@ router.get(
   '/:reservationId',
   authMiddleware.authenticateUser,
   authMiddleware.restrictTo('consumer'),
-  reservationController.getReservationById
+  reservationController.getReservationById,
 );
 
 /**
@@ -51,7 +51,7 @@ router.patch(
   authMiddleware.authenticateUser,
   authMiddleware.restrictTo('consumer'),
   validators.validateUpdateStatus,
-  reservationController.updateReservationStatus
+  reservationController.updateReservationStatus,
 );
 
 /**
@@ -63,7 +63,7 @@ router.get(
   '/:reservationId/status',
   authMiddleware.authenticateUser,
   authMiddleware.restrictTo('consumer'),
-  reservationController.getReservationStatus
+  reservationController.getReservationStatus,
 );
 
 module.exports = router;

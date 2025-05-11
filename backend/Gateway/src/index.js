@@ -5,11 +5,11 @@ const cors = require('cors');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 require('dotenv').config();
 
-const app = express();                                                                 //서버 인스턴스 생성(허브)(관제탑)
+const app = express(); //서버 인스턴스 생성(허브)(관제탑)
 const PORT = process.env.GATEWAY_PORT || 3000;
 
 // Middleware
-app.use(cors());                                                                       //어떤 과정(순서 중요)을 거칠지
+app.use(cors()); //어떤 과정(순서 중요)을 거칠지
 // body 파싱 미들웨어를 프록시 라우트 뒤로 이동                    //프록시와 라우팅, 핸들러, 미들웨어는 모두 인스턴스에 연결된다. 따라서 순서 중요
 app.use(morgan('dev')); // 모든 요청에 대한 기본 로그                     // 과정을 거치고 가느냐 그냥 가느냐는 다르다.
 
@@ -45,10 +45,10 @@ const createProxyOptions = (targetPort, pathRewrite, serviceName) => ({
         error: `${serviceName} 연결 실패`,
         message: err.message,
         code: 'PROXY_ERROR',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
-  }
+  },
 });
 
 // 요청 로깅 미들웨어 생성 함수
@@ -64,100 +64,108 @@ const createRequestLogger = (serviceName) => (req, res, next) => {
 };
 
 // Auth Service 프록시
-app.use('/api/auth', 
+app.use(
+  '/api/auth',
   createRequestLogger('AUTH'),
   createProxyMiddleware(
     createProxyOptions(
       process.env.AUTH_SERVICE_PORT || 3001,
       { '^/api/auth': '/api' },
-      'Auth Service'
-    )
-  )
+      'Auth Service',
+    ),
+  ),
 );
 
 // Consumer Service 프록시
-app.use('/api/consumer',
+app.use(
+  '/api/consumer',
   createRequestLogger('CONSUMER'),
   createProxyMiddleware(
     createProxyOptions(
       process.env.CONSUMER_SERVICE_PORT || 3002,
       { '^/api/consumer': '' },
-      'Consumer Service'
-    )
-  )
+      'Consumer Service',
+    ),
+  ),
 );
 
 // Technician Service 프록시
-app.use('/api/technician',
+app.use(
+  '/api/technician',
   createRequestLogger('TECHNICIAN'),
   createProxyMiddleware(
     createProxyOptions(
       process.env.TECHNICIAN_SERVICE_PORT || 3003,
       { '^/api/technician': '' },
-      'Technician Service'
-    )
-  )
+      'Technician Service',
+    ),
+  ),
 );
 
 // Admin Service 프록시
-app.use('/api/admin',
+app.use(
+  '/api/admin',
   createRequestLogger('ADMIN'),
   createProxyMiddleware(
     createProxyOptions(
       process.env.ADMIN_SERVICE_PORT || 3004,
       { '^/api/admin': '' },
-      'Admin Service'
-    )
-  )
+      'Admin Service',
+    ),
+  ),
 );
 
 // Payment Service 프록시
-app.use('/api/payments',
+app.use(
+  '/api/payments',
   createRequestLogger('PAYMENT'),
   createProxyMiddleware(
     createProxyOptions(
       process.env.PAYMENT_SERVICE_PORT || 3005,
       { '^/api/payments': '/api' },
-      'Payment Service'
-    )
-  )
+      'Payment Service',
+    ),
+  ),
 );
 
 // iOS 앱 호환을 위한 직접 엔드포인트 라우팅
 // 서비스 관련 엔드포인트
-app.use('/api/services', 
+app.use(
+  '/api/services',
   createRequestLogger('SERVICES-DIRECT'),
   createProxyMiddleware(
     createProxyOptions(
       process.env.CONSUMER_SERVICE_PORT || 3002,
       { '^/api/services': '/api/services' },
-      'Services API'
-    )
-  )
+      'Services API',
+    ),
+  ),
 );
 
 // 예약 관련 엔드포인트
-app.use('/api/reservations',
+app.use(
+  '/api/reservations',
   createRequestLogger('RESERVATIONS-DIRECT'),
   createProxyMiddleware(
     createProxyOptions(
       process.env.CONSUMER_SERVICE_PORT || 3002,
       { '^/api/reservations': '/api/reservations' },
-      'Reservations API'
-    )
-  )
+      'Reservations API',
+    ),
+  ),
 );
 
 // iOS 앱 호환용 service-categories 경로 추가 - 계층적 카테고리 엔드포인트로 리다이렉트
-app.use('/api/service-categories',
+app.use(
+  '/api/service-categories',
   createRequestLogger('SERVICE-CATEGORIES-COMPAT'),
   createProxyMiddleware(
     createProxyOptions(
       process.env.CONSUMER_SERVICE_PORT || 3002,
       { '^/api/service-categories': '/api/services/categories/hierarchical' },
-      'Service Categories API'
-    )
-  )
+      'Service Categories API',
+    ),
+  ),
 );
 
 // 프록시 미들웨어 등록 후 로그
@@ -177,19 +185,22 @@ app.use((err, req, res, next) => {
   res.status(500).json({
     error: '서버 오류 발생',
     message: err.message,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
 // Start server
-app.listen(PORT, () => {                                                             //서버 실행, 외부 요청 받을 준비
+app.listen(PORT, () => {
+  //서버 실행, 외부 요청 받을 준비
   console.log(`API Gateway running on port ${PORT}`);
   console.log(`API Gateway URL: http://localhost:${PORT}`);
   console.log('For iOS simulator, use http://localhost:3000');
   console.log('Available services:');
   console.log(`- Auth Service: http://localhost:${process.env.AUTH_SERVICE_PORT || 3001}`);
   console.log(`- Consumer Service: http://localhost:${process.env.CONSUMER_SERVICE_PORT || 3002}`);
-  console.log(`- Technician Service: http://localhost:${process.env.TECHNICIAN_SERVICE_PORT || 3003}`);
+  console.log(
+    `- Technician Service: http://localhost:${process.env.TECHNICIAN_SERVICE_PORT || 3003}`,
+  );
   console.log(`- Admin Service: http://localhost:${process.env.ADMIN_SERVICE_PORT || 3004}`);
   console.log(`- Payment Service: http://localhost:${process.env.PAYMENT_SERVICE_PORT || 3005}`);
 });

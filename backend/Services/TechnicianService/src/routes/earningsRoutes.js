@@ -12,7 +12,7 @@ router.get(
   '/',
   authMiddleware.authenticateUser,
   authMiddleware.restrictTo('technician'),
-  earningsController.getTechnicianEarnings
+  earningsController.getTechnicianEarnings,
 );
 
 module.exports = router;

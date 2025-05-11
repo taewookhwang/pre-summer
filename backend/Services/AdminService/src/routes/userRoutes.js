@@ -13,7 +13,7 @@ router.get(
   '/',
   authMiddleware.authenticateUser,
   authMiddleware.ensureAdmin,
-  userController.getUsers
+  userController.getUsers,
 );
 
 /**
@@ -25,7 +25,7 @@ router.get(
   '/:userId',
   authMiddleware.authenticateUser,
   authMiddleware.ensureAdmin,
-  userController.getUserById
+  userController.getUserById,
 );
 
 /**
@@ -38,7 +38,7 @@ router.post(
   authMiddleware.authenticateUser,
   authMiddleware.ensureAdmin,
   validators.validateCreateUser,
-  userController.createUser
+  userController.createUser,
 );
 
 /**
@@ -51,7 +51,7 @@ router.put(
   authMiddleware.authenticateUser,
   authMiddleware.ensureAdmin,
   validators.validateUpdateUser,
-  userController.updateUser
+  userController.updateUser,
 );
 
 /**
@@ -64,7 +64,7 @@ router.patch(
   authMiddleware.authenticateUser,
   authMiddleware.ensureAdmin,
   validators.validateUpdatePassword,
-  userController.updateUserPassword
+  userController.updateUserPassword,
 );
 
 /**
@@ -76,7 +76,7 @@ router.delete(
   '/:userId',
   authMiddleware.authenticateUser,
   authMiddleware.ensureAdmin,
-  userController.disableUser
+  userController.disableUser,
 );
 
 module.exports = router;

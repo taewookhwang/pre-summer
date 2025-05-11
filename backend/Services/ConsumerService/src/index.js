@@ -24,13 +24,13 @@ app.use('/api', routes);
 // Error handling middleware
 app.use((err, req, res, next) => {
   logger.error(`Error: ${err.message}`);
-  
+
   res.status(err.statusCode || 500).json({
     success: false,
     error: {
       message: err.message || 'Server Error',
-      details: process.env.NODE_ENV === 'development' ? err.stack : 'Internal server error'
-    }
+      details: process.env.NODE_ENV === 'development' ? err.stack : 'Internal server error',
+    },
   });
 });
 
@@ -40,8 +40,8 @@ app.use((req, res) => {
     success: false,
     error: {
       message: 'Endpoint not found',
-      details: 'The requested resource does not exist'
-    }
+      details: 'The requested resource does not exist',
+    },
   });
 });
 

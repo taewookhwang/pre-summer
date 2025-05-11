@@ -16,22 +16,19 @@ class DashboardService {
   async getDashboardStats(filters = {}) {
     try {
       // Set date range for filtering
-      const startDate = filters.startDate ? new Date(filters.startDate) : new Date(new Date().setDate(new Date().getDate() - 30));
+      const startDate = filters.startDate
+        ? new Date(filters.startDate)
+        : new Date(new Date().setDate(new Date().getDate() - 30));
       const endDate = filters.endDate ? new Date(filters.endDate) : new Date();
-      
+
       // Get stats from different services
-      const [
-        userStats,
-        reservationStats,
-        jobStats,
-        earningsStats
-      ] = await Promise.all([
+      const [userStats, reservationStats, jobStats, earningsStats] = await Promise.all([
         this.getUserStats(),
         this.getReservationStats(startDate, endDate),
         this.getJobStats(startDate, endDate),
-        this.getEarningsStats(startDate, endDate)
+        this.getEarningsStats(startDate, endDate),
       ]);
-      
+
       return {
         userStats,
         reservationStats,
@@ -39,15 +36,15 @@ class DashboardService {
         earningsStats,
         period: {
           startDate: startDate.toISOString(),
-          endDate: endDate.toISOString()
-        }
+          endDate: endDate.toISOString(),
+        },
       };
     } catch (error) {
       logger.error('Error fetching dashboard stats:', error);
       throw error;
     }
   }
-  
+
   /**
    * Get user statistics
    * @returns {Promise<Object>} User statistics
@@ -55,38 +52,44 @@ class DashboardService {
   async getUserStats() {
     try {
       // Query to count users by role
-      const usersByRole = await sequelize.query(`
+      const usersByRole = await sequelize.query(
+        `
         SELECT role, COUNT(*) as count
         FROM users
         GROUP BY role
-      `, { type: QueryTypes.SELECT });
-      
+      `,
+        { type: QueryTypes.SELECT },
+      );
+
       // Convert to a more usable format
       const roleStats = {
         total: 0,
         consumers: 0,
         technicians: 0,
-        admins: 0
+        admins: 0,
       };
-      
-      usersByRole.forEach(stat => {
+
+      usersByRole.forEach((stat) => {
         if (stat.role === 'consumer') roleStats.consumers = parseInt(stat.count);
         else if (stat.role === 'technician') roleStats.technicians = parseInt(stat.count);
         else if (stat.role === 'admin') roleStats.admins = parseInt(stat.count);
-        
+
         roleStats.total += parseInt(stat.count);
       });
-      
+
       // Get new user count in the last 30 days
-      const newUsers = await sequelize.query(`
+      const newUsers = await sequelize.query(
+        `
         SELECT COUNT(*) as count
         FROM users
         WHERE created_at >= NOW() - INTERVAL '30 days'
-      `, { type: QueryTypes.SELECT });
-      
+      `,
+        { type: QueryTypes.SELECT },
+      );
+
       return {
         ...roleStats,
-        newUsers: parseInt(newUsers[0]?.count || 0)
+        newUsers: parseInt(newUsers[0]?.count || 0),
       };
     } catch (error) {
       logger.error('Error fetching user stats:', error);
@@ -95,11 +98,11 @@ class DashboardService {
         consumers: 0,
         technicians: 0,
         admins: 0,
-        newUsers: 0
+        newUsers: 0,
       };
     }
   }
-  
+
   /**
    * Get reservation statistics
    * @param {Date} startDate - Start date for period
@@ -114,15 +117,15 @@ class DashboardService {
         {
           params: {
             startDate: startDate.toISOString(),
-            endDate: endDate.toISOString()
-          }
-        }
+            endDate: endDate.toISOString(),
+          },
+        },
       );
-      
+
       if (response.data && response.data.success) {
         return response.data.reservation_stats;
       }
-      
+
       throw new Error('Failed to fetch reservation stats from Consumer Service');
     } catch (error) {
       logger.error('Error fetching reservation stats:', error);
@@ -133,11 +136,11 @@ class DashboardService {
         in_progress: 0,
         completed: 0,
         cancelled: 0,
-        daily_stats: {}
+        daily_stats: {},
       };
     }
   }
-  
+
   /**
    * Get job statistics
    * @param {Date} startDate - Start date for period
@@ -152,15 +155,15 @@ class DashboardService {
         {
           params: {
             startDate: startDate.toISOString(),
-            endDate: endDate.toISOString()
-          }
-        }
+            endDate: endDate.toISOString(),
+          },
+        },
       );
-      
+
       if (response.data && response.data.success) {
         return response.data.job_stats;
       }
-      
+
       throw new Error('Failed to fetch job stats from Technician Service');
     } catch (error) {
       logger.error('Error fetching job stats:', error);
@@ -172,11 +175,11 @@ class DashboardService {
         completed: 0,
         cancelled: 0,
         average_completion_time: 0,
-        daily_stats: {}
+        daily_stats: {},
       };
     }
   }
-  
+
   /**
    * Get earnings statistics
    * @param {Date} startDate - Start date for period
@@ -191,15 +194,15 @@ class DashboardService {
         {
           params: {
             startDate: startDate.toISOString(),
-            endDate: endDate.toISOString()
-          }
-        }
+            endDate: endDate.toISOString(),
+          },
+        },
       );
-      
+
       if (response.data && response.data.success) {
         return response.data.earnings_stats;
       }
-      
+
       throw new Error('Failed to fetch earnings stats from Technician Service');
     } catch (error) {
       logger.error('Error fetching earnings stats:', error);
@@ -208,11 +211,11 @@ class DashboardService {
         avg_job_value: 0,
         daily_earnings: {},
         weekly_earnings: {},
-        monthly_earnings: {}
+        monthly_earnings: {},
       };
     }
   }
-  
+
   /**
    * Get service performance metrics
    * @param {Object} filters - Optional filters like date range
@@ -221,24 +224,26 @@ class DashboardService {
   async getServicePerformance(filters = {}) {
     try {
       // Set date range for filtering
-      const startDate = filters.startDate ? new Date(filters.startDate) : new Date(new Date().setDate(new Date().getDate() - 30));
+      const startDate = filters.startDate
+        ? new Date(filters.startDate)
+        : new Date(new Date().setDate(new Date().getDate() - 30));
       const endDate = filters.endDate ? new Date(filters.endDate) : new Date();
-      
+
       // Call Consumer Service API to get service performance metrics
       const response = await axios.get(
         `${process.env.CONSUMER_SERVICE_URL}/api/admin/stats/services`,
         {
           params: {
             startDate: startDate.toISOString(),
-            endDate: endDate.toISOString()
-          }
-        }
+            endDate: endDate.toISOString(),
+          },
+        },
       );
-      
+
       if (response.data && response.data.success) {
         return response.data.service_performance;
       }
-      
+
       throw new Error('Failed to fetch service performance metrics');
     } catch (error) {
       logger.error('Error fetching service performance:', error);
@@ -246,7 +251,7 @@ class DashboardService {
         services: [],
         mostPopular: null,
         leastPopular: null,
-        highestRevenue: null
+        highestRevenue: null,
       };
     }
   }
